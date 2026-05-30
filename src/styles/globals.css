@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@theme {
+  /* — Premium Pink & Cream Beige 设计令牌 — */
+  --color-background: #F5F1E6;
+  --color-surface: #FFFFFF;
+  --color-elevated: #FAF8F3;
+  --color-border: #DFDAD1;
+
+  --color-accent: #D4858A;
+  --color-accent-dim: #C06B70;
+  --color-accent-hover: #E8A0A5;
+  --color-warm-muted: #9C9488;
+  --color-warm-stone: #B8B0A4;
+
+  --color-text-primary: #3D2E2E;
+  --color-text-secondary: #6B5B5B;
+
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "Space Grotesk", monospace;
+}
+
+/* — 页面切换动画关键帧 — */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes page-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--color-text-primary);
+    font-family: "DM Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  ::selection {
+    background-color: rgba(212, 133, 138, 0.25);
+    color: var(--color-text-primary);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* 页面进入动画 */
+  .animate-page-in {
+    animation: page-fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* 骨架屏微光扫过 */
+  .animate-skeleton {
+    background: linear-gradient(90deg, #E5E0D8 25%, #EDE9E0 37%, #E5E0D8 63%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.8s ease-in-out infinite;
+  }
+
+  /* 骨架屏 pulse（备用） */
+  .animate-skeleton-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
