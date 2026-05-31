@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { motion } from "framer-motion";
 import { getSongLyric } from "@/lib/api";
 import { parseLrc, type LyricLine } from "@/lib/utils";
 import type { Song } from "@/types";
@@ -10,10 +11,13 @@ interface LyricsProps {
   currentTime: number;
 }
 
+const SPRING = { type: "spring" as const, stiffness: 300, damping: 25, mass: 1 };
+
 export function Lyrics({ song, currentTime }: LyricsProps) {
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lineRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const lastActiveIndex = useRef(-1);
 
   useEffect(() => {
@@ -37,13 +41,26 @@ export function Lyrics({ song, currentTime }: LyricsProps) {
     return idx;
   }, [lyrics, currentTime]);
 
+  const setLineRef = useCallback((index: number, el: HTMLDivElement | null) => {
+    if (el) lineRefs.current.set(index, el);
+    else lineRefs.current.delete(index);
+  }, []);
+
+  // 手动计算 scrollTop 使当前行居中
   useEffect(() => {
     if (activeIndex < 0 || activeIndex === lastActiveIndex.current) return;
     lastActiveIndex.current = activeIndex;
+
     const container = containerRef.current;
-    if (!container) return;
-    const activeLine = container.querySelector(`[data-lyric-index="${activeIndex}"]`);
-    if (activeLine) activeLine.scrollIntoView({ behavior: "smooth", block: "center" });
+    const activeLine = lineRefs.current.get(activeIndex);
+    if (!container || !activeLine) return;
+
+    const lineTop = activeLine.offsetTop;
+    const lineHeight = activeLine.offsetHeight;
+    const containerHeight = container.clientHeight;
+    const targetTop = lineTop - containerHeight / 2 + lineHeight / 2;
+
+    container.scrollTo({ top: targetTop, behavior: "smooth" });
   }, [activeIndex]);
 
   if (!song) {
@@ -66,19 +83,22 @@ export function Lyrics({ song, currentTime }: LyricsProps) {
         const isActive = index === activeIndex;
         const isPast = index < activeIndex;
         return (
-          <div
+          <motion.div
             key={`${line.time}-${index}`}
-            data-lyric-index={index}
-            className={`py-3 px-4 text-center transition-all duration-500 ease-in-out cursor-pointer ${
+            ref={(el) => setLineRef(index, el)}
+            animate={{
+              scale: isActive ? 1.25 : 1,
+              opacity: isActive ? 1 : isPast ? 0.4 : 0.6,
+            }}
+            transition={SPRING}
+            className={`py-3 px-4 text-center text-xl cursor-pointer origin-center ${
               isActive
-                ? "text-stone-800 text-3xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-                : isPast
-                  ? "text-stone-400/40 text-base opacity-50"
-                  : "text-stone-400/60 text-xl opacity-70"
+                ? "text-stone-800 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                : "text-stone-400"
             }`}
           >
             {line.text}
-          </div>
+          </motion.div>
         );
       })}
     </div>

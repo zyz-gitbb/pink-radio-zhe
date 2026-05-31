@@ -54,17 +54,15 @@ export async function getSongUrl(songId: number): Promise<string | null> {
     // 检查是否是版权限制或 VIP 歌曲
     if (!url || code === -110 || code === -200) {
       console.warn(
-        `检测到版权限制或空链接（歌曲ID: ${songId}, 错误码: ${code}），已启用测试音频兜底`
+        `检测到版权限制或空链接（歌曲ID: ${songId}, 错误码: ${code}）`
       );
-      // 返回一个公开的免费测试 MP3 链接
-      return "https://www.w3schools.com/html/horse.mp3";
+      return null;
     }
 
     return url;
   } catch (error) {
     console.error("Failed to get song URL:", error);
-    console.warn("接口请求失败，已启用测试音频兜底");
-    return "https://www.w3schools.com/html/horse.mp3";
+    return null;
   }
 }
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePlayer } from "@/hooks/use-player";
 import { formatTime } from "@/lib/utils";
 import { getSongUrl } from "@/lib/api";
+import { showToast } from "@/components/Toast";
 import { Lyrics } from "@/components/lyrics";
 import {
   Play,
@@ -77,7 +78,12 @@ export function Player() {
       const loadAndPlay = async () => {
         try {
           const url = await getSongUrl(currentSong.id);
-          if (url && audioRef.current) {
+          if (!url) {
+            showToast("这首歌暂时还听不了哦宝宝~");
+            next();
+            return;
+          }
+          if (audioRef.current) {
             audioRef.current.src = url;
             audioRef.current.load();
             const handleCanPlay = () => {
