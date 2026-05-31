@@ -105,7 +105,7 @@ export async function getSongLyric(songId: number): Promise<string | null> {
   }
 }
 
-// 获取个性化推荐
+// 获取个性化推荐（旧接口，保留作兜底）
 export async function getPersonalized(): Promise<PersonalizedResponse> {
   try {
     const data = await getRequest<any>("personalized", {});
@@ -114,6 +114,111 @@ export async function getPersonalized(): Promise<PersonalizedResponse> {
     console.error("Failed to get personalized:", error);
     return { result: [] };
   }
+}
+
+// 获取每日推荐歌曲（需登录）
+export async function getDailyRecommendSongs(): Promise<Song[]> {
+  const bust = Date.now().toString();
+  try {
+    const res = await fetch(`${PROXY_BASE}/recommend/songs?timestamp=${bust}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.data?.dailySongs || data.data?.songs || [];
+    }
+  } catch (e) {
+    console.warn("/recommend/songs 不可用:", e);
+  }
+  return [];
+}
+
+// 获取私人推荐歌单（需登录）
+export async function getPrivateRecommend(): Promise<{ id: number; name: string; picUrl: string }[]> {
+  const bust = Date.now().toString();
+  try {
+    const res = await fetch(`${PROXY_BASE}/personalized/privatecontent?timestamp=${bust}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.result || [];
+    }
+  } catch (e) {
+    console.warn("/personalized/privatecontent 不可用:", e);
+  }
+  return [];
+}
+
+// 按分类获取热门歌单（用于"华语流行日推"等入口）
+export async function getTopPlaylistByCategory(
+  cat: string,
+  limit = 1
+): Promise<{ id: number; name: string; picUrl: string; description?: string }[]> {
+  const bust = Date.now().toString();
+  try {
+    const res = await fetch(`${PROXY_BASE}/top/playlist?cat=${encodeURIComponent(cat)}&limit=${limit}&timestamp=${bust}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return (data.playlists || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        picUrl: p.coverImgUrl || p.picUrl,
+        description: p.description,
+      }));
+    }
+  } catch (e) {
+    console.warn("/top/playlist 不可用:", e);
+  }
+  return [];
+}
+
+// 获取每日推荐歌单（需登录，优先使用）+ 兜底 /personalized
+export async function getRecommendations(): Promise<PersonalizedResponse> {
+  const bust = Date.now().toString();
+
+  // 优先尝试 /recommend/resource（基于用户品味的私域推荐）
+  try {
+    const res = await fetch(`${PROXY_BASE}/recommend/resource?timestamp=${bust}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const result = data.recommend || data.result;
+      if (Array.isArray(result) && result.length > 0) {
+        return { result };
+      }
+    }
+  } catch (e) {
+    console.warn("/recommend/resource 不可用，回退到 /personalized:", e);
+  }
+
+  // 兜底：/personalized（公开推荐，无需登录）
+  try {
+    const res = await fetch(`${PROXY_BASE}/personalized?timestamp=${bust}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { result: data.result || [] };
+    }
+  } catch (error) {
+    console.error("Failed to get personalized:", error);
+  }
+
+  return { result: [] };
 }
 
 // 获取歌单详情（基础信息）

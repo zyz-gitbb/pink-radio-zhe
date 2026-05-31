@@ -4,27 +4,16 @@
       "Bash(gh *)",
       "Bash(winget install *)",
       "PowerShell(gh *)",
-      "Bash(Get-ChildItem -Path \"D:\\\\cc.test\\\\cctry\\\\try1\" -Force)",
-      "Bash(Select-Object Name, Length, LastWriteTime, PSIsContainer)",
-      "Bash(Format-Table -AutoSize)",
-      "Bash(Get-ChildItem -Path \"D:\\\\cc.test\\\\cctry\\\\try1\" -Recurse -Force)",
-      "Bash(Select-Object FullName, Length, LastWriteTime)",
-      "Bash(npx create-next-app@latest *)",
-      "Bash(npm init *)",
-      "Bash(npm install *)",
       "Bash(npm run *)",
-      "Bash(curl -s \"http://localhost:3000/api/netease/personalized\")",
-      "Bash(curl -s \"http://localhost:3000/api/netease/search?keywords=周杰伦&limit=3\")",
-      "Bash(curl -v \"http://localhost:3000/api/netease/search?keywords=周杰伦&limit=3\")",
-      "Bash(curl -s \"http://localhost:3000/api/netease/search?keywords=Jay&limit=3\")",
-      "Bash(curl *)",
-      "Bash(python -c \"import sys, json; data = json.load\\(sys.stdin\\); song = data.get\\('data', [{}]\\)[0]; print\\(f'Song ID: {song.get\\(\\\\\"id\\\\\"\\)}\\\\nURL: {song.get\\(\\\\\"url\\\\\"\\)}\\\\nCode: {song.get\\(\\\\\"code\\\\\"\\)}'\\)\")",
-      "Bash(python -c \"import sys, json; data = json.load\\(sys.stdin\\); songs = data.get\\('result', {}\\).get\\('songs', []\\); [print\\(f'{s[\\\\\"id\\\\\"]}: {s[\\\\\"name\\\\\"]} by {[a[\\\\\"name\\\\\"] for a in s.get\\(\\\\\"artists\\\\\", []\\)]}'\\) for s in songs[:5]]\")",
-      "Bash(Start-Sleep -Seconds 5)",
-      "Bash(Get-Content \"C:\\\\Users\\\\滢\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--cc-test-cctry-try1\\\\daa8fab6-2641-47e5-b9eb-cb67bb885286\\\\tasks\\\\bce1jfupq.output\")",
-      "Bash(npx next *)",
-      "Bash(npx skills *)",
-      "Bash(git *)"
+      "Bash(npx tsc *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\.claude\\statusline.ps1",
+    "padding": 0,
+    "refreshInterval": 5
   }
 }

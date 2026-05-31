@@ -9,11 +9,12 @@ import type { Song } from "@/types";
 interface LyricsProps {
   song: Song | null;
   currentTime: number;
+  onSeek?: (time: number) => void;
 }
 
 const SPRING = { type: "spring" as const, stiffness: 300, damping: 25, mass: 1 };
 
-export function Lyrics({ song, currentTime }: LyricsProps) {
+export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,10 +92,11 @@ export function Lyrics({ song, currentTime }: LyricsProps) {
               opacity: isActive ? 1 : isPast ? 0.4 : 0.6,
             }}
             transition={SPRING}
-            className={`py-3 px-4 text-center text-xl cursor-pointer origin-center ${
+            onClick={() => onSeek?.(line.time)}
+            className={`py-3 px-4 text-center text-xl cursor-pointer origin-center transition-colors duration-300 ${
               isActive
                 ? "text-stone-800 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-                : "text-stone-400"
+                : "text-stone-400 hover:text-stone-500"
             }`}
           >
             {line.text}

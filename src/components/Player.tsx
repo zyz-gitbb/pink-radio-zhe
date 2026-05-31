@@ -35,6 +35,7 @@ export function Player() {
     setProgress,
     setDuration,
     setPlayMode,
+    seek,
   } = usePlayer();
 
   const [showLyrics, setShowLyrics] = useState(false);
@@ -209,7 +210,7 @@ export function Player() {
               )}
             </div>
             <div className="flex-1 max-w-lg h-[28rem]">
-              <Lyrics song={currentSong} currentTime={progress} />
+              <Lyrics song={currentSong} currentTime={progress} onSeek={seek} />
             </div>
           </div>
 

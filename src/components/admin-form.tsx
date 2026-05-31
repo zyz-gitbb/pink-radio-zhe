@@ -1,19 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { saveChannel, deleteChannel, getChannels } from "@/lib/storage";
+import { useState, useEffect } from "react";
+import { saveChannel, deleteChannel, getChannels, getCategories, onCategoriesChanged } from "@/lib/storage";
 import { generateId } from "@/lib/utils";
 import { SearchSongs } from "@/components/search-songs";
 import { Music2, Plus, Pencil, Trash2 } from "lucide-react";
-import type { Channel, ChannelCategory, Song } from "@/types";
-
-const categories: ChannelCategory[] = [
-  "深夜放松",
-  "工作专注",
-  "运动节拍",
-  "学习陪伴",
-  "其他",
-];
+import type { Channel, Song } from "@/types";
 
 interface AdminFormProps {
   onChannelSaved?: () => void;
@@ -21,16 +13,24 @@ interface AdminFormProps {
 
 export function AdminForm({ onChannelSaved }: AdminFormProps) {
   const [channels, setChannels] = useState<Channel[]>(getChannels());
+  const [categories, setCategories] = useState<string[]>(getCategories());
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     coverUrl: "",
-    category: "其他" as ChannelCategory,
+    category: "其他",
     tags: "",
     songIds: [] as number[],
   });
+
+  useEffect(() => {
+    const unsubscribe = onCategoriesChanged(() => {
+      setCategories(getCategories());
+    });
+    return unsubscribe;
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

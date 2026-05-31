@@ -64,12 +64,7 @@ export interface Channel {
   updatedAt: number;
 }
 
-export type ChannelCategory =
-  | "深夜放松"
-  | "工作专注"
-  | "运动节拍"
-  | "学习陪伴"
-  | "其他";
+export type ChannelCategory = string;
 
 // 播放器相关类型
 export type PlayMode = "sequential" | "random";

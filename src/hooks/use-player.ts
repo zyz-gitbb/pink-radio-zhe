@@ -42,5 +42,11 @@ export function usePlayer() {
       dispatch({ type: "SET_PLAY_MODE", mode }),
     removeSong: (index: number) =>
       dispatch({ type: "REMOVE_SONG", index }),
+    seek: (time: number) => {
+      if (audioRef.current) {
+        audioRef.current.currentTime = time;
+      }
+      dispatch({ type: "SET_PROGRESS", progress: time });
+    },
   };
 }

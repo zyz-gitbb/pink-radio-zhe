@@ -1,33 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getChannels, onChannelsChanged } from "@/lib/storage";
+import { getChannels, onChannelsChanged, getCategories, onCategoriesChanged } from "@/lib/storage";
 import { ChannelCard } from "@/components/channel-card";
-import { Plus, Headphones, Radio, Sparkles } from "lucide-react";
+import { TagManager } from "@/components/tag-manager";
+import { Plus, Headphones, Radio, Sparkles, Settings } from "lucide-react";
 import Link from "next/link";
-import type { Channel, ChannelCategory } from "@/types";
-
-const categories: ChannelCategory[] = [
-  "深夜放松",
-  "工作专注",
-  "运动节拍",
-  "学习陪伴",
-  "其他",
-];
+import type { Channel } from "@/types";
 
 export default function Home() {
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<ChannelCategory | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
   useEffect(() => {
     setChannels(getChannels());
+    setCategories(getCategories());
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onChannelsChanged(() => {
+    const unsubChannels = onChannelsChanged(() => {
       setChannels(getChannels());
     });
-    return unsubscribe;
+    const unsubCategories = onCategoriesChanged(() => {
+      setCategories(getCategories());
+    });
+    return () => {
+      unsubChannels();
+      unsubCategories();
+    };
   }, []);
 
   const filteredChannels = selectedCategory
@@ -116,7 +118,7 @@ export default function Home() {
               你的私人音乐收藏
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setSelectedCategory(null)}
               className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
@@ -140,6 +142,13 @@ export default function Home() {
                 {category}
               </button>
             ))}
+            <button
+              onClick={() => setTagManagerOpen(true)}
+              className="ml-1 w-7 h-7 rounded-lg flex items-center justify-center text-text-secondary/40 hover:text-accent hover:bg-accent/8 transition-all"
+              title="管理标签"
+            >
+              <Settings size={14} />
+            </button>
           </div>
         </div>
 
@@ -164,6 +173,8 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      <TagManager open={tagManagerOpen} onClose={() => setTagManagerOpen(false)} />
     </div>
   );
 }

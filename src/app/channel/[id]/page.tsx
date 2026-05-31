@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { getChannelById, saveChannel } from "@/lib/storage";
 import { getSongDetailBatch } from "@/lib/api";
@@ -53,6 +53,14 @@ export default function ChannelPage() {
   };
 
   const addedSongIds = channel?.songIds || [];
+
+  const handleRemoveSong = useCallback((songId: number) => {
+    setSongs((prev) => prev.filter((s) => s.id !== songId));
+    setChannel((prev) => {
+      if (!prev) return prev;
+      return { ...prev, songIds: prev.songIds.filter((id) => id !== songId) };
+    });
+  }, []);
 
   if (loading) {
     return (
@@ -179,7 +187,7 @@ export default function ChannelPage() {
         )}
 
         {songs.length > 0 ? (
-          <SongList songs={songs} />
+          <SongList songs={songs} channelId={channelId} onRemoveSong={handleRemoveSong} />
         ) : (
           <div className="text-center py-20">
             <div className="w-16 h-16 rounded-2xl bg-surface border border-border/30 flex items-center justify-center mx-auto mb-4">
