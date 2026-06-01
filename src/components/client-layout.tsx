@@ -5,11 +5,13 @@ import { UserProvider } from "@/contexts/user-context";
 import { Sidebar } from "@/components/sidebar";
 import { Player } from "@/components/Player";
 import { Toast } from "@/components/Toast";
+import { BackgroundStamps } from "@/components/background-stamps";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
       <PlayerProvider>
+        <BackgroundStamps />
         <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1 ml-60 pb-32">{children}</main>
