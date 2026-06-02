@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   getRecommendations,
+  getRecommendationPool,
   getDailyRecommendSongs,
 } from "@/lib/api";
 import { RecommendationCard } from "@/components/recommendation-card";
@@ -19,6 +21,16 @@ import {
   CalendarDays,
 } from "lucide-react";
 import type { Song } from "@/types";
+
+// Fisher-Yates 洗牌算法
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // ========== 骨架屏 ==========
 
@@ -59,14 +71,16 @@ export default function RadioPage() {
   const [showDailySongs, setShowDailySongs] = useState(false);
   const [loadingDaily, setLoadingDaily] = useState(false);
 
-  // ---- 底部推荐流 ----
-  const [recommendations, setRecommendations] = useState<{ id: number; name: string; picUrl: string }[]>([]);
+  // ---- 底部推荐流（前端洗牌） ----
+  type PoolItem = { id: number; name: string; picUrl: string };
+  const fullPoolRef = useRef<PoolItem[]>([]);
+  const [displayList, setDisplayList] = useState<PoolItem[]>([]);
   const [loadingFlow, setLoadingFlow] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { setPlaylist } = usePlayer();
 
-  // 过滤掉顶部 Bento 已占用的歌单
+  // 顶部已占用的 ID
   const bentoIds = useMemo(() => {
     const ids = new Set<number>();
     if (radarId) ids.add(radarId);
@@ -74,14 +88,12 @@ export default function RadioPage() {
     return ids;
   }, [radarId, chineseId]);
 
-  const filteredRecommendations = useMemo(
-    () => recommendations.filter((item) => !bentoIds.has(item.id)),
-    [recommendations, bentoIds]
-  );
+  // 从池中随机抽取 12 张
+  const PICK_COUNT = 12;
 
-  // ---- 初始化：加载 Bento 封面 + 动态 ID ----
+  // ---- 初始化：Bento 封面 + 数据池（带 sessionStorage 缓存） ----
   useEffect(() => {
-    // 每日推荐封面（取第一首歌的专辑图）
+    // 每日推荐封面
     getDailyRecommendSongs().then((songs) => {
       if (songs.length > 0) {
         const cover = songs[0]?.al?.picUrl || songs[0]?.album?.picUrl || "";
@@ -89,43 +101,92 @@ export default function RadioPage() {
       }
     });
 
-    // 从 /recommend/resource 提取私人雷达 + 华语流行的 ID 和封面
+    // Bento 卡片数据
     getRecommendations().then((data) => {
       const items = data.result;
       if (items.length === 0) return;
-
-      // 匹配"雷达"
       const radarItem = items.find((it) => /雷达/.test(it.name));
-      // 匹配"华语"或"日推"
       const chineseItem = items.find((it) => /华语|日推/.test(it.name));
-
-      // 兜底：取前两项
       const fallback1 = items[0];
       const fallback2 = items.length > 1 ? items[1] : items[0];
-
       const resolvedRadar = radarItem || fallback1;
       const resolvedChinese = chineseItem || fallback2;
-
       setRadarId(resolvedRadar.id);
       setRadarCover(resolvedRadar.picUrl);
       setChineseId(resolvedChinese.id);
       setChineseCover(resolvedChinese.picUrl);
     });
+
+    // 探索更多：优先从 sessionStorage 恢复
+    try {
+      const cachedDisplay = sessionStorage.getItem("explore_display_list");
+      const cachedPool = sessionStorage.getItem("explore_pool");
+      if (cachedDisplay && cachedPool) {
+        const display = JSON.parse(cachedDisplay) as PoolItem[];
+        const pool = JSON.parse(cachedPool) as PoolItem[];
+        fullPoolRef.current = pool;
+        setDisplayList(display);
+        setLoadingFlow(false);
+        return; // 有缓存，跳过网络请求
+      }
+    } catch {
+      // 缓存解析失败，走正常请求
+    }
+
+    // 无缓存：加载大数据池（合并 3 个接口，去重）
+    getRecommendationPool(100).then((pool) => {
+      fullPoolRef.current = pool;
+      setLoadingFlow(false);
+      const picked = shuffle(pool).slice(0, PICK_COUNT);
+      setDisplayList(picked);
+      // 写入缓存
+      try {
+        sessionStorage.setItem("explore_pool", JSON.stringify(pool));
+        sessionStorage.setItem("explore_display_list", JSON.stringify(picked));
+      } catch {}
+    });
   }, []);
 
-  // ---- 初始化 + 刷新：底部推荐流 ----
-  const fetchFlow = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoadingFlow(true);
-    const data = await getRecommendations();
-    setRecommendations(data.result);
-    setLoadingFlow(false);
-    setRefreshing(false);
-  }, []);
-
+  // bentoIds 就绪后，从池中剔除顶部已占用的（仅在非缓存路径下生效）
   useEffect(() => {
-    fetchFlow();
-  }, [fetchFlow]);
+    if (fullPoolRef.current.length === 0) return;
+    // 检查是否已经过滤过（避免缓存路径重复剔除）
+    const needsFilter = [...bentoIds].some((id) =>
+      fullPoolRef.current.some((item) => item.id === id)
+    );
+    if (!needsFilter) return;
+    fullPoolRef.current = fullPoolRef.current.filter((it) => !bentoIds.has(it.id));
+    const picked = shuffle(fullPoolRef.current).slice(0, PICK_COUNT);
+    setDisplayList(picked);
+    try {
+      sessionStorage.setItem("explore_pool", JSON.stringify(fullPoolRef.current));
+      sessionStorage.setItem("explore_display_list", JSON.stringify(picked));
+    } catch {}
+  }, [bentoIds]);
+
+  // 换一批：强制重新洗牌（优先从池中洗，池为空则重新请求）
+  const refreshPlaylists = useCallback(async () => {
+    setIsRefreshing(true);
+
+    let pool = fullPoolRef.current;
+    if (pool.length === 0) {
+      // 池为空，重新请求
+      pool = await getRecommendationPool(100);
+      fullPoolRef.current = pool;
+    }
+
+    const picked = shuffle(pool).slice(0, PICK_COUNT);
+    setDisplayList(picked);
+
+    // 更新缓存
+    try {
+      sessionStorage.setItem("explore_pool", JSON.stringify(pool));
+      sessionStorage.setItem("explore_display_list", JSON.stringify(picked));
+    } catch {}
+
+    // 短暂延迟后关闭 spin，给予视觉反馈
+    setTimeout(() => setIsRefreshing(false), 500);
+  }, []);
 
   // ---- 每日推荐点击 ----
   const handleDailyClick = async () => {
@@ -300,33 +361,46 @@ export default function RadioPage() {
           </h2>
         </div>
         <button
-          onClick={() => fetchFlow(true)}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-1.5 text-[13px] text-stone-500 hover:text-stone-800 bg-accent/5 rounded-lg hover:bg-accent/10 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={refreshPlaylists}
+          className="flex items-center gap-2 px-4 py-1.5 text-[13px] text-stone-500 hover:text-stone-800 bg-accent/5 rounded-lg hover:bg-accent/10 transition-all font-medium"
         >
-          <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-          {refreshing ? "刷新中…" : "刷新推荐"}
+          <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
+          换一批
         </button>
       </div>
 
-      {/* ====== 底部推荐流 ====== */}
+      {/* ====== 底部推荐流（洗牌） ====== */}
       {loadingFlow ? (
         <GridSkeleton />
-      ) : filteredRecommendations.length > 0 ? (
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5 transition-opacity duration-300 ${
-            refreshing ? "opacity-40 pointer-events-none" : "opacity-100"
-          }`}
+      ) : displayList.length > 0 ? (
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5"
+          layout
         >
-          {filteredRecommendations.map((item) => (
-            <RecommendationCard
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              picUrl={item.picUrl}
-            />
-          ))}
-        </div>
+          <AnimatePresence mode="popLayout" initial={false}>
+            {displayList.map((item, index) => (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                transition={{
+                  type: "spring",
+                  damping: 25,
+                  stiffness: 250,
+                  delay: index * 0.03,
+                }}
+              >
+                <RecommendationCard
+                  id={item.id}
+                  name={item.name}
+                  picUrl={item.picUrl}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       ) : (
         <div className="text-center py-16">
           <div className="w-14 h-14 rounded-2xl bg-elevated border border-border/30 flex items-center justify-center mx-auto mb-4">

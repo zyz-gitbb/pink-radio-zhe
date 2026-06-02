@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/hooks/use-player";
 import { formatTime } from "@/lib/utils";
 import { getSongUrl } from "@/lib/api";
 import { showToast } from "@/components/Toast";
 import { Lyrics } from "@/components/lyrics";
+import { CommentDrawer } from "@/components/comment-drawer";
+import { AmbientBackground } from "@/components/ambient-background";
+import { MusicDiary } from "@/components/music-diary";
+import { ChannelPickerPopover } from "@/components/channel-picker-popover";
 import {
   Play,
   Pause,
@@ -16,7 +21,9 @@ import {
   Repeat,
   Shuffle,
   Mic2,
+  MessageSquare,
   X,
+  FolderPlus,
 } from "lucide-react";
 
 export function Player() {
@@ -39,6 +46,9 @@ export function Player() {
   } = usePlayer();
 
   const [showLyrics, setShowLyrics] = useState(false);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const addBtnRef = useRef<HTMLButtonElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const previousVolume = useRef(volume);
@@ -176,52 +186,83 @@ export function Player() {
         onEnded={handleEnded}
       />
 
-      {/* 歌词面板 */}
-      {showLyrics && (
-        <div className="fixed inset-0 bottom-[72px] z-40 flex items-center justify-center">
-          <div className="absolute inset-0 bg-background/95 backdrop-blur-3xl">
-            <div
-              className="absolute inset-0 opacity-[0.08]"
-              style={{
-                backgroundImage: `url(${coverUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                filter: "blur(120px) saturate(0.3)",
-              }}
-            />
-          </div>
-
-          <div className="relative z-10 flex items-center gap-16 px-12 max-w-6xl w-full">
-            <div className="flex-shrink-0">
-              {currentSong ? (
-                <div className="relative">
-                  <img
-                    src={coverUrl}
-                    alt={currentSong.name}
-                    className="w-64 h-64 rounded-2xl ring-1 ring-black/5 shadow-[0_20px_50px_rgba(212,133,138,0.15)]"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.svg'; }}
-                  />
-                  <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-accent/15 to-transparent -z-10 blur-xl" />
-                </div>
-              ) : (
-                <div className="w-64 h-64 rounded-2xl bg-elevated border border-border/30 flex items-center justify-center">
-                  <Play size={40} className="text-warm-muted/20" />
-                </div>
-              )}
-            </div>
-            <div className="flex-1 max-w-lg h-[28rem]">
-              <Lyrics song={currentSong} currentTime={progress} onSeek={seek} />
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowLyrics(false)}
-            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-accent/15 transition-all"
+      {/* 歌词面板 — 阻尼滑出入场 */}
+      <AnimatePresence>
+        {showLyrics && (
+          <motion.div
+            key="lyrics-panel"
+            className="fixed inset-0 bottom-[72px] z-40 flex items-center justify-center"
+            initial={{ y: "100%", opacity: 0.5 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5 }}
           >
-            <X size={18} />
-          </button>
-        </div>
-      )}
+            <AmbientBackground coverUrl={coverUrl} />
+
+            {/* 内容区 — 评论打开时退让 */}
+            <motion.div
+              className="relative z-10 flex items-start gap-16 px-12 max-w-6xl w-full"
+              animate={{
+                x: isCommentOpen ? "-5%" : 0,
+                scale: isCommentOpen ? 0.98 : 1,
+              }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            >
+              <div className="flex-shrink-0 flex flex-col items-center">
+                {currentSong ? (
+                  <div className="relative">
+                    <img
+                      src={coverUrl}
+                      alt={currentSong.name}
+                      className="w-64 h-64 rounded-2xl ring-1 ring-black/5 shadow-[0_20px_50px_rgba(212,133,138,0.15)]"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.svg'; }}
+                    />
+                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-accent/15 to-transparent -z-10 blur-xl" />
+                  </div>
+                ) : (
+                  <div className="w-64 h-64 rounded-2xl bg-elevated border border-border/30 flex items-center justify-center">
+                    <Play size={40} className="text-warm-muted/20" />
+                  </div>
+                )}
+                {/* 音乐手账 */}
+                <MusicDiary songId={currentSong?.id} />
+              </div>
+              <div className="flex-1 max-w-lg h-[28rem]">
+                <Lyrics song={currentSong} currentTime={progress} onSeek={seek} />
+              </div>
+            </motion.div>
+
+            {/* 顶栏按钮 */}
+            <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
+              <button
+                onClick={() => setIsCommentOpen(!isCommentOpen)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                  isCommentOpen
+                    ? "bg-accent/15 text-accent"
+                    : "bg-accent/10 text-text-secondary hover:text-text-primary hover:bg-accent/15"
+                }`}
+                title="评论"
+              >
+                <MessageSquare size={17} />
+              </button>
+              <button
+                onClick={() => { setShowLyrics(false); setIsCommentOpen(false); }}
+                className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-accent/15 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* 评论抽屉 */}
+            <CommentDrawer
+              open={isCommentOpen}
+              onClose={() => setIsCommentOpen(false)}
+              songId={currentSong?.id ?? null}
+              songName={currentSong?.name}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 播放器栏 — 全宽通栏吸底 */}
       <div className="fixed bottom-0 left-0 right-0 w-full h-[72px] bg-surface/80 backdrop-blur-xl border-t border-border/60 z-50 shadow-[0_-4px_30px_rgba(0,0,0,0.06)]">
@@ -330,6 +371,41 @@ export function Player() {
             >
               <Mic2 size={15} strokeWidth={1.5} />
             </button>
+
+            <button
+              onClick={() => {
+                if (!showLyrics) setShowLyrics(true);
+                setIsCommentOpen(!isCommentOpen);
+              }}
+              className={`transition-colors ${isCommentOpen ? "text-accent" : "text-text-secondary/40 hover:text-text-secondary"}`}
+              title="评论"
+            >
+              <MessageSquare size={15} strokeWidth={1.5} />
+            </button>
+
+            {currentSong && (
+              <>
+                <button
+                  ref={addBtnRef}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPicker(!showPicker);
+                  }}
+                  className={`transition-colors ${showPicker ? "text-accent" : "text-text-secondary/40 hover:text-text-secondary"}`}
+                  title="收录到频道"
+                >
+                  <FolderPlus size={15} strokeWidth={1.5} />
+                </button>
+                {showPicker && (
+                  <ChannelPickerPopover
+                    songId={currentSong.id}
+                    songName={currentSong.name}
+                    triggerRef={addBtnRef}
+                    onClose={() => setShowPicker(false)}
+                  />
+                )}
+              </>
+            )}
 
             <div className="flex items-center gap-2">
               <button

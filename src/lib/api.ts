@@ -66,13 +66,24 @@ export async function getSongUrl(songId: number): Promise<string | null> {
   }
 }
 
+// 规范化歌曲数据（兼容 dt / duration / time 字段）
+function normalizeSong(s: any): Song {
+  return {
+    ...s,
+    duration: s.duration || s.dt || s.time || 0,
+    ar: s.ar || s.artists || [],
+    al: s.al || s.album || undefined,
+  };
+}
+
 // 获取歌曲详情
 export async function getSongDetail(songId: number): Promise<Song | null> {
   try {
     const response = await getRequest<any>("song/detail", {
       ids: songId.toString(),
     });
-    return response.songs?.[0] || null;
+    const raw = response.songs?.[0];
+    return raw ? normalizeSong(raw) : null;
   } catch (error) {
     console.error("Failed to get song detail:", error);
     return null;
@@ -85,7 +96,7 @@ export async function getSongDetailBatch(songIds: number[]): Promise<Song[]> {
     const response = await getRequest<any>("song/detail", {
       ids: songIds.join(","),
     });
-    return response.songs || [];
+    return (response.songs || []).map(normalizeSong);
   } catch (error) {
     console.error("Failed to get song details:", error);
     return [];
@@ -105,6 +116,37 @@ export async function getSongLyric(songId: number): Promise<string | null> {
   }
 }
 
+// 获取歌曲评论
+export interface SongComment {
+  user: { avatarUrl: string; nickname: string };
+  content: string;
+  likedCount: number;
+  time: number;
+}
+
+export async function getSongComments(
+  songId: number,
+  limit = 100
+): Promise<{ hotComments: SongComment[]; comments: SongComment[] }> {
+  const bust = Date.now().toString();
+  try {
+    const res = await fetch(
+      `${PROXY_BASE}/comment/music?id=${songId}&limit=${limit}&timestamp=${bust}`,
+      { method: "GET", headers: { "Content-Type": "application/json" }, cache: "no-store" }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        hotComments: data.hotComments || [],
+        comments: data.comments || [],
+      };
+    }
+  } catch (e) {
+    console.warn("获取评论失败:", e);
+  }
+  return { hotComments: [], comments: [] };
+}
+
 // 获取个性化推荐（旧接口，保留作兜底）
 export async function getPersonalized(): Promise<PersonalizedResponse> {
   try {
@@ -114,6 +156,58 @@ export async function getPersonalized(): Promise<PersonalizedResponse> {
     console.error("Failed to get personalized:", error);
     return { result: [] };
   }
+}
+
+// 获取大批量推荐歌单池（用于前端洗牌）
+export async function getRecommendationPool(limit = 100): Promise<{ id: number; name: string; picUrl: string }[]> {
+  const bust = Date.now().toString();
+  const results: { id: number; name: string; picUrl: string }[] = [];
+  const seen = new Set<number>();
+
+  // 来源 1：/recommend/resource（私域推荐，约 10-30 条）
+  try {
+    const res = await fetch(`${PROXY_BASE}/recommend/resource?timestamp=${bust}`, {
+      method: "GET", headers: { "Content-Type": "application/json" }, cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const items = data.recommend || data.result || [];
+      for (const it of items) {
+        if (!seen.has(it.id)) { seen.add(it.id); results.push(it); }
+      }
+    }
+  } catch {}
+
+  // 来源 2：/personalized（公开推荐，约 10-30 条）
+  try {
+    const res = await fetch(`${PROXY_BASE}/personalized?timestamp=${bust}`, {
+      method: "GET", headers: { "Content-Type": "application/json" }, cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      for (const it of (data.result || [])) {
+        if (!seen.has(it.id)) { seen.add(it.id); results.push(it); }
+      }
+    }
+  } catch {}
+
+  // 来源 3：/top/playlist（热门歌单池，支持 limit）
+  try {
+    const res = await fetch(`${PROXY_BASE}/top/playlist?limit=${limit}&order=hot&timestamp=${bust}`, {
+      method: "GET", headers: { "Content-Type": "application/json" }, cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      for (const p of (data.playlists || [])) {
+        if (!seen.has(p.id)) {
+          seen.add(p.id);
+          results.push({ id: p.id, name: p.name, picUrl: p.coverImgUrl || p.picUrl });
+        }
+      }
+    }
+  } catch {}
+
+  return results;
 }
 
 // 获取每日推荐歌曲（需登录）
@@ -127,7 +221,8 @@ export async function getDailyRecommendSongs(): Promise<Song[]> {
     });
     if (res.ok) {
       const data = await res.json();
-      return data.data?.dailySongs || data.data?.songs || [];
+      const raw: any[] = data.data?.dailySongs || data.data?.songs || [];
+      return raw.map(normalizeSong);
     }
   } catch (e) {
     console.warn("/recommend/songs 不可用:", e);
@@ -227,7 +322,11 @@ export async function getPlaylistDetail(id: number): Promise<any | null> {
     const response = await getRequest<any>("playlist/detail", {
       id: id.toString(),
     });
-    return response.playlist || null;
+    const playlist = response.playlist || null;
+    if (playlist?.tracks) {
+      playlist.tracks = playlist.tracks.map(normalizeSong);
+    }
+    return playlist;
   } catch (error) {
     console.error("Failed to get playlist detail:", error);
     return null;
@@ -242,7 +341,7 @@ export async function searchSongs(keyword: string): Promise<Song[]> {
       limit: "20",
       type: "1",
     });
-    return response.result?.songs || [];
+    return (response.result?.songs || []).map(normalizeSong);
   } catch (error) {
     console.error("Failed to search songs:", error);
     return [];

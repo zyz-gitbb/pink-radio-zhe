@@ -98,7 +98,10 @@ export function ChannelPickerPopover({
           channels.map((ch) => (
             <button
               key={ch.id}
-              onClick={() => handleSelect(ch.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelect(ch.id);
+              }}
               className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-accent/8 transition-colors text-left"
             >
               {ch.coverUrl ? (

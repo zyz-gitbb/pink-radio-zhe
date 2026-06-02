@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Radio, Settings, User, LogOut, Loader2, Music, Disc3 } from "lucide-react";
+import { Home, Radio, Settings, User, LogOut, Loader2, Music, Disc3, BookOpen } from "lucide-react";
 import { useUser } from "@/contexts/user-context";
 import { LoginModal } from "@/components/login-modal";
 import { logout } from "@/lib/api";
@@ -13,6 +13,7 @@ import type { Channel } from "@/types";
 const navItems = [
   { href: "/", label: "首页", icon: Home },
   { href: "/radio", label: "个性化电台", icon: Radio },
+  { href: "/diary", label: "音乐手账", icon: BookOpen },
   { href: "/admin", label: "管理后台", icon: Settings },
 ];
 

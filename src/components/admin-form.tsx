@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { saveChannel, deleteChannel, getChannels, getCategories, onCategoriesChanged } from "@/lib/storage";
 import { generateId } from "@/lib/utils";
 import { SearchSongs } from "@/components/search-songs";
-import { Music2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Music2, Plus, Pencil, Trash2, ImagePlus, X } from "lucide-react";
 import type { Channel, Song } from "@/types";
 
 interface AdminFormProps {
@@ -24,6 +24,21 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
     tags: "",
     songIds: [] as number[],
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setFormData((prev) => ({ ...prev, coverUrl: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+    // 重置 input 以允许重复上传同一文件
+    e.target.value = "";
+  };
 
   useEffect(() => {
     const unsubscribe = onCategoriesChanged(() => {
@@ -120,11 +135,56 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">封面图 URL</label>
-            <input
-              type="text" name="coverUrl" value={formData.coverUrl} onChange={handleInputChange}
-              className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
-            />
+            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">封面图</label>
+            <div className="flex gap-2">
+              <input
+                type="text" name="coverUrl" value={formData.coverUrl} onChange={handleInputChange}
+                placeholder="粘贴网络图片链接，或点击右侧按钮上传本地图片"
+                className="flex-1 px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-elevated border border-border/50 text-stone-400 hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-all"
+                title="上传本地图片"
+              >
+                <ImagePlus size={16} />
+              </button>
+              {formData.coverUrl && (
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, coverUrl: "" }))}
+                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-elevated border border-border/50 text-stone-400 hover:text-red-400 hover:border-red-300/40 hover:bg-red-50 transition-all"
+                  title="清除封面"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            {/* 实时预览 */}
+            {formData.coverUrl && (
+              <div className="mt-3 flex items-start gap-3">
+                <img
+                  src={formData.coverUrl}
+                  alt="封面预览"
+                  className="w-24 h-24 object-cover rounded-xl shadow-sm border border-stone-200/50"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                <div className="pt-1">
+                  <p className="text-[11px] text-stone-400">封面预览</p>
+                  <p className="text-[10px] text-stone-400/60 mt-0.5">
+                    {formData.coverUrl.startsWith("data:") ? "本地图片 (Base64)" : "网络链接"}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>

@@ -20,13 +20,14 @@ interface SongListProps {
 }
 
 export function SongList({ songs, onPlayAll, channelId, onRemoveSong }: SongListProps) {
-  const { currentSong, isPlaying, playSong, setPlaylist } = usePlayer();
+  const { currentSong, isPlaying, setPlaylist } = usePlayer();
   const [pickerSong, setPickerSong] = useState<Song | null>(null);
   const addBtnRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const isChannelMode = !!channelId;
 
   const handlePlaySong = (song: Song) => {
-    playSong(song);
+    const index = songs.findIndex((s) => s.id === song.id);
+    setPlaylist(songs, index >= 0 ? index : 0);
   };
 
   const handlePlayAll = () => {
