@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import { FolderPlus, Music2 } from "lucide-react";
 import { getChannels, addSongToChannel } from "@/lib/storage";
 import { showToast } from "@/components/Toast";
@@ -21,7 +22,7 @@ export function ChannelPickerPopover({
   onClose,
 }: ChannelPickerPopoverProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const [pos, setPos] = useState({ bottom: 0, right: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -34,7 +35,7 @@ export function ChannelPickerPopover({
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     setPos({
-      top: rect.bottom + 6,
+      bottom: window.innerHeight - rect.top + 6,
       right: window.innerWidth - rect.right,
     });
   }, [triggerRef]);
@@ -74,10 +75,14 @@ export function ChannelPickerPopover({
   if (!mounted) return null;
 
   return createPortal(
-    <div
+    <motion.div
       ref={panelRef}
       className="fixed z-[200] w-56 rounded-xl bg-[#fdfaf8]/95 backdrop-blur-xl shadow-[0_12px_40px_rgba(61,46,46,0.12),0_0_0_1px_rgba(223,218,209,0.5)] overflow-hidden"
-      style={{ top: pos.top, right: pos.right }}
+      style={{ bottom: pos.bottom, right: pos.right, transformOrigin: "bottom right" }}
+      initial={{ opacity: 0, scale: 0.9, y: 8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 8 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
     >
       {/* 标题 */}
       <div className="px-4 pt-3 pb-2">
@@ -123,7 +128,7 @@ export function ChannelPickerPopover({
           ))
         )}
       </div>
-    </div>,
+    </motion.div>,
     document.body
   );
 }

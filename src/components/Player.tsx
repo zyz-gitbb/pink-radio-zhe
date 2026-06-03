@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { usePlayer } from "@/hooks/use-player";
 import { formatTime } from "@/lib/utils";
 import { getSongUrl } from "@/lib/api";
@@ -25,6 +25,77 @@ import {
   X,
   FolderPlus,
 } from "lucide-react";
+
+// ========== 3D 悬浮视差封面 ==========
+
+function CoverCard3D({ src, alt }: { src: string; alt: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+
+  const springConfig = { stiffness: 300, damping: 30 };
+  const rotateX = useSpring(useTransform(mouseY, [0, 1], [10, -10]), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, [0, 1], [-10, 10]), springConfig);
+  const glareX = useSpring(useTransform(mouseX, [0, 1], [-50, 50]), springConfig);
+  const glareY = useSpring(useTransform(mouseY, [0, 1], [-50, 50]), springConfig);
+
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+    setIsHovered(false);
+  };
+
+  return (
+    <div style={{ perspective: 1200 }}>
+      <motion.div
+        ref={ref}
+        className="relative w-64 h-64 rounded-2xl overflow-hidden cursor-pointer"
+        style={{
+          transformStyle: "preserve-3d",
+          rotateX,
+          rotateY,
+        }}
+        whileHover={{
+          scale: 1.02,
+          y: -5,
+          boxShadow: "0px 25px 50px rgba(0,0,0,0.2)",
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={handleMouseLeave}
+      >
+        <img
+          src={src}
+          alt={alt}
+          className="w-64 h-64 rounded-2xl object-cover ring-1 ring-black/5"
+          onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.svg'; }}
+        />
+        {/* 动态光斑层 */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none rounded-2xl"
+          style={{
+            background:
+              "radial-gradient(ellipse_at_center, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)",
+            x: glareX,
+            y: glareY,
+            opacity: isHovered ? 1 : 0,
+          }}
+          transition={{ opacity: { duration: 0.3 } }}
+        />
+      </motion.div>
+    </div>
+  );
+}
 
 export function Player() {
   const {
@@ -210,15 +281,7 @@ export function Player() {
             >
               <div className="flex-shrink-0 flex flex-col items-center">
                 {currentSong ? (
-                  <div className="relative">
-                    <img
-                      src={coverUrl}
-                      alt={currentSong.name}
-                      className="w-64 h-64 rounded-2xl ring-1 ring-black/5 shadow-[0_20px_50px_rgba(212,133,138,0.15)]"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.svg'; }}
-                    />
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-accent/15 to-transparent -z-10 blur-xl" />
-                  </div>
+                  <CoverCard3D src={coverUrl} alt={currentSong.name} />
                 ) : (
                   <div className="w-64 h-64 rounded-2xl bg-elevated border border-border/30 flex items-center justify-center">
                     <Play size={40} className="text-warm-muted/20" />
@@ -396,14 +459,16 @@ export function Player() {
                 >
                   <FolderPlus size={15} strokeWidth={1.5} />
                 </button>
-                {showPicker && (
-                  <ChannelPickerPopover
-                    songId={currentSong.id}
-                    songName={currentSong.name}
-                    triggerRef={addBtnRef}
-                    onClose={() => setShowPicker(false)}
-                  />
-                )}
+                <AnimatePresence>
+                  {showPicker && (
+                    <ChannelPickerPopover
+                      songId={currentSong.id}
+                      songName={currentSong.name}
+                      triggerRef={addBtnRef}
+                      onClose={() => setShowPicker(false)}
+                    />
+                  )}
+                </AnimatePresence>
               </>
             )}
 

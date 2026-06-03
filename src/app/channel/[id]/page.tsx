@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getChannelById, saveChannel } from "@/lib/storage";
 import { getSongDetailBatch } from "@/lib/api";
 import { SongList } from "@/components/song-list";
 import { SearchSongs } from "@/components/search-songs";
-import { Music2, Plus, Check } from "lucide-react";
+import { Music2, Plus, Check, ArrowLeft } from "lucide-react";
 import type { Channel, Song } from "@/types";
 
 export default function ChannelPage() {
   const params = useParams();
+  const router = useRouter();
   const channelId = params.id as string;
 
   const [channel, setChannel] = useState<Channel | null>(null);
@@ -94,6 +95,17 @@ export default function ChannelPage() {
         />
       </div>
 
+      {/* 返回按钮 */}
+      <div className="px-12 pt-8">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-sm text-stone-400 hover:text-stone-700 transition-colors mb-6 group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span>返回</span>
+        </button>
+      </div>
+
       {/* 频道头部 */}
       <div className="relative overflow-hidden">
         {/* 模糊封面背景层 */}
@@ -158,28 +170,6 @@ export default function ChannelPage() {
 
       {/* 内容区域 */}
       <div className="px-12 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-medium text-stone-800">歌曲列表</h2>
-          <div className="flex items-center gap-3">
-            {addSuccess && (
-              <span className="flex items-center gap-1 text-accent text-[12px] font-medium animate-pulse">
-                <Check size={13} /> 已添加
-              </span>
-            )}
-            <button
-              onClick={() => setShowSearch(!showSearch)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 text-[13px] rounded-lg transition-all font-medium ${
-                showSearch
-                  ? "bg-accent/15 text-accent"
-                  : "bg-accent/10 text-accent hover:bg-accent/15"
-              }`}
-            >
-              <Plus size={13} />
-              {showSearch ? "收起搜索" : "添加歌曲"}
-            </button>
-          </div>
-        </div>
-
         {showSearch && (
           <div className="mb-6">
             <SearchSongs onAddSong={handleAddSong} addedSongIds={addedSongIds} />
@@ -187,7 +177,31 @@ export default function ChannelPage() {
         )}
 
         {songs.length > 0 ? (
-          <SongList songs={songs} channelId={channelId} onRemoveSong={handleRemoveSong} />
+          <SongList
+            songs={songs}
+            channelId={channelId}
+            onRemoveSong={handleRemoveSong}
+            headerExtra={
+              <div className="flex items-center gap-3">
+                {addSuccess && (
+                  <span className="flex items-center gap-1 text-accent text-[12px] font-medium animate-pulse">
+                    <Check size={13} /> 已添加
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowSearch(!showSearch)}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 text-[13px] rounded-lg transition-all font-medium ${
+                    showSearch
+                      ? "bg-accent/15 text-accent"
+                      : "bg-accent/10 text-accent hover:bg-accent/15"
+                  }`}
+                >
+                  <Plus size={13} />
+                  {showSearch ? "收起搜索" : "添加歌曲"}
+                </button>
+              </div>
+            }
+          />
         ) : (
           <div className="text-center py-20">
             <div className="w-16 h-16 rounded-2xl bg-surface border border-border/30 flex items-center justify-center mx-auto mb-4">

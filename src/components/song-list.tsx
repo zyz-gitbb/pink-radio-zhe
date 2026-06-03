@@ -17,9 +17,11 @@ interface SongListProps {
   channelId?: string;
   /** 移出歌曲后的回调（用于父组件更新本地状态） */
   onRemoveSong?: (songId: number) => void;
+  /** 标题栏右侧额外操作按钮（如"添加歌曲"） */
+  headerExtra?: React.ReactNode;
 }
 
-export function SongList({ songs, onPlayAll, channelId, onRemoveSong }: SongListProps) {
+export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtra }: SongListProps) {
   const { currentSong, isPlaying, setPlaylist } = usePlayer();
   const [pickerSong, setPickerSong] = useState<Song | null>(null);
   const addBtnRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -57,20 +59,23 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong }: SongList
       {/* 播放全部按钮 */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-base font-medium text-stone-800">歌曲列表</h3>
-        <button
-          onClick={handlePlayAll}
-          className="flex items-center gap-2 px-5 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-all text-[13px] font-medium"
-        >
-          <Play size={14} fill="currentColor" />
-          播放全部
-        </button>
+        <div className="flex items-center gap-3">
+          {headerExtra}
+          <button
+            onClick={handlePlayAll}
+            className="flex items-center gap-2 px-5 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-all text-[13px] font-medium"
+          >
+            <Play size={14} fill="currentColor" />
+            播放全部
+          </button>
+        </div>
       </div>
 
       {/* 表头 */}
       <div className="flex items-center px-4 py-2 text-[10px] text-stone-400 uppercase tracking-[0.15em] border-b border-border/30 mb-1 font-mono">
         <span className="w-8 text-center">#</span>
         <span className="w-10 ml-3" />
-        <span className="flex-1 ml-3">标题</span>
+        <span className="flex-1 ml-3">歌曲名</span>
         <span className="w-48">专辑</span>
         <span className="w-16 text-right">时长</span>
         <span className="w-8" />

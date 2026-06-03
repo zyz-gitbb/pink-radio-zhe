@@ -12,14 +12,15 @@ interface LyricsProps {
   onSeek?: (time: number) => void;
 }
 
-const SPRING = { type: "spring" as const, stiffness: 300, damping: 25, mass: 1 };
-
 export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const lastActiveIndex = useRef(-1);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isUserScrollingRef = useRef(false);
 
   useEffect(() => {
     if (!song) { setLyrics([]); return; }
@@ -47,10 +48,40 @@ export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
     else lineRefs.current.delete(index);
   }, []);
 
-  // 手动计算 scrollTop 使当前行居中
+  // 防抖：每次滚动重置计时器，完全静止 3.5 秒后恢复自动对焦
+  const handleUserScroll = useCallback(() => {
+    // 首次进入滚动模式时同步更新 ref 和 state
+    if (!isUserScrollingRef.current) {
+      isUserScrollingRef.current = true;
+      setIsUserScrolling(true);
+    }
+    // 每次滚动事件都重置计时器（核心防抖）
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
+      isUserScrollingRef.current = false;
+      setIsUserScrolling(false);
+      // 丝滑回弹到当前播放行
+      const container = containerRef.current;
+      if (!container || lastActiveIndex.current < 0) return;
+      const activeLine = lineRefs.current.get(lastActiveIndex.current);
+      if (!activeLine) return;
+      const targetTop = activeLine.offsetTop - container.clientHeight / 2 + activeLine.offsetHeight / 2;
+      container.scrollTo({ top: targetTop, behavior: "smooth" });
+    }, 3500);
+  }, []);
+
+  // 清理滚动计时器
+  useEffect(() => {
+    return () => {
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
+  }, []);
+
+  // 手动计算 scrollTop 使当前行居中（用户手动滚动时跳过，避免互相争夺滚动位置）
   useEffect(() => {
     if (activeIndex < 0 || activeIndex === lastActiveIndex.current) return;
     lastActiveIndex.current = activeIndex;
+    if (isUserScrollingRef.current) return;
 
     const container = containerRef.current;
     const activeLine = lineRefs.current.get(activeIndex);
@@ -79,24 +110,33 @@ export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
       ref={containerRef}
       className="h-full overflow-y-auto scrollbar-hide py-16"
       style={{ maskImage: "linear-gradient(transparent, black 12%, black 88%, transparent)" }}
+      onWheel={handleUserScroll}
+      onTouchMove={handleUserScroll}
     >
       {lyrics.map((line, index) => {
-        const isActive = index === activeIndex;
-        const isPast = index < activeIndex;
+        const distance = Math.abs(index - activeIndex);
+        const isActive = distance === 0;
+
+        const currentBlur = isUserScrolling ? 0 : Math.min(4, distance * 1);
+        const currentOpacity = isUserScrolling
+          ? Math.max(0.4, 1 - distance * 0.05)
+          : Math.max(0.15, 1 - distance * 0.2);
+
         return (
           <motion.div
             key={`${line.time}-${index}`}
             ref={(el) => setLineRef(index, el)}
             animate={{
-              scale: isActive ? 1.25 : 1,
-              opacity: isActive ? 1 : isPast ? 0.4 : 0.6,
+              scale: isActive && !isUserScrolling ? 1.05 : 1,
+              opacity: currentOpacity,
+              filter: `blur(${currentBlur}px)`,
             }}
-            transition={SPRING}
+            transition={{ duration: 0.3 }}
             onClick={() => onSeek?.(line.time)}
-            className={`py-3 px-4 text-center text-xl cursor-pointer origin-center transition-colors duration-300 ${
+            className={`py-3 px-4 text-center text-xl cursor-pointer origin-center ${
               isActive
                 ? "text-stone-800 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-                : "text-stone-400 hover:text-stone-500"
+                : "text-stone-400"
             }`}
           >
             {line.text}
