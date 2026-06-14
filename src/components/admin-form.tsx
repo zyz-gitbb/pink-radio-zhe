@@ -1,21 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { saveChannel, deleteChannel, getChannels, getCategories, onCategoriesChanged } from "@/lib/storage";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { saveChannel, deleteChannel } from "@/app/actions";
 import { generateId } from "@/lib/utils";
 import { SearchSongs } from "@/components/search-songs";
 import { Music2, Plus, Pencil, Trash2, ImagePlus, X } from "lucide-react";
+import { showToast } from "@/components/Toast";
 import type { Channel, Song } from "@/types";
 
 interface AdminFormProps {
-  onChannelSaved?: () => void;
+  channels: Channel[];
+  categories: string[];
 }
 
-export function AdminForm({ onChannelSaved }: AdminFormProps) {
-  const [channels, setChannels] = useState<Channel[]>(getChannels());
-  const [categories, setCategories] = useState<string[]>(getCategories());
+export function AdminForm({ channels, categories }: AdminFormProps) {
+  const router = useRouter();
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -32,45 +35,50 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        setFormData((prev) => ({ ...prev, coverUrl: reader.result as string }));
+        setFormData((prev) => ({
+          ...prev,
+          coverUrl: reader.result as string,
+        }));
       }
     };
     reader.readAsDataURL(file);
-    // 重置 input 以允许重复上传同一文件
     e.target.value = "";
   };
 
-  useEffect(() => {
-    const unsubscribe = onCategoriesChanged(() => {
-      setCategories(getCategories());
-    });
-    return unsubscribe;
-  }, []);
-
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const channel: Channel = {
-      id: editingChannel?.id || generateId(),
-      name: formData.name,
-      description: formData.description,
-      coverUrl: formData.coverUrl,
-      category: formData.category,
-      tags: formData.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      songIds: formData.songIds,
-      createdAt: editingChannel?.createdAt || Date.now(),
-      updatedAt: Date.now(),
-    };
-    saveChannel(channel);
-    setChannels(getChannels());
-    resetForm();
-    onChannelSaved?.();
+    setSaving(true);
+    try {
+      const channelData: Omit<Channel, "songIds"> = {
+        id: editingChannel?.id || generateId(),
+        name: formData.name,
+        description: formData.description,
+        coverUrl: formData.coverUrl,
+        category: formData.category,
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        createdAt: editingChannel?.createdAt || Date.now(),
+        updatedAt: Date.now(),
+      };
+      await saveChannel(channelData);
+      resetForm();
+      router.refresh();
+    } catch {
+      showToast("保存失败，请重试");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (channel: Channel) => {
@@ -86,27 +94,40 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
     setShowSearch(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("确定要删除这个频道吗？")) {
-      deleteChannel(id);
-      setChannels(getChannels());
+      await deleteChannel(id);
       if (editingChannel?.id === id) resetForm();
+      router.refresh();
     }
   };
 
   const resetForm = () => {
     setEditingChannel(null);
-    setFormData({ name: "", description: "", coverUrl: "", category: "其他", tags: "", songIds: [] });
+    setFormData({
+      name: "",
+      description: "",
+      coverUrl: "",
+      category: "其他",
+      tags: "",
+      songIds: [],
+    });
     setShowSearch(false);
   };
 
   const handleAddSong = (song: Song) => {
     if (formData.songIds.includes(song.id)) return;
-    setFormData((prev) => ({ ...prev, songIds: [...prev.songIds, song.id] }));
+    setFormData((prev) => ({
+      ...prev,
+      songIds: [...prev.songIds, song.id],
+    }));
   };
 
   const handleRemoveSong = (songId: number) => {
-    setFormData((prev) => ({ ...prev, songIds: prev.songIds.filter((id) => id !== songId) }));
+    setFormData((prev) => ({
+      ...prev,
+      songIds: prev.songIds.filter((id) => id !== songId),
+    }));
   };
 
   return (
@@ -119,26 +140,42 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">频道名称 *</label>
+            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
+              频道名称 *
+            </label>
             <input
-              type="text" name="name" value={formData.name} onChange={handleInputChange} required
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
               className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">频道描述</label>
+            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
+              频道描述
+            </label>
             <textarea
-              name="description" value={formData.description} onChange={handleInputChange} rows={3}
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              rows={3}
               className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors resize-none text-[13px]"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">封面图</label>
+            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
+              封面图
+            </label>
             <div className="flex gap-2">
               <input
-                type="text" name="coverUrl" value={formData.coverUrl} onChange={handleInputChange}
+                type="text"
+                name="coverUrl"
+                value={formData.coverUrl}
+                onChange={handleInputChange}
                 placeholder="粘贴网络图片链接，或点击右侧按钮上传本地图片"
                 className="flex-1 px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
               />
@@ -160,7 +197,9 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
               {formData.coverUrl && (
                 <button
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, coverUrl: "" }))}
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, coverUrl: "" }))
+                  }
                   className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-elevated border border-border/50 text-stone-400 hover:text-red-400 hover:border-red-300/40 hover:bg-red-50 transition-all"
                   title="清除封面"
                 >
@@ -168,19 +207,22 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
                 </button>
               )}
             </div>
-            {/* 实时预览 */}
             {formData.coverUrl && (
               <div className="mt-3 flex items-start gap-3">
                 <img
                   src={formData.coverUrl}
                   alt="封面预览"
                   className="w-24 h-24 object-cover rounded-xl shadow-sm border border-stone-200/50"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
                 />
                 <div className="pt-1">
                   <p className="text-[11px] text-stone-400">封面预览</p>
                   <p className="text-[10px] text-stone-400/60 mt-0.5">
-                    {formData.coverUrl.startsWith("data:") ? "本地图片 (Base64)" : "网络链接"}
+                    {formData.coverUrl.startsWith("data:")
+                      ? "本地图片 (Base64)"
+                      : "网络链接"}
                   </p>
                 </div>
               </div>
@@ -188,19 +230,33 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">分类 *</label>
+            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
+              分类 *
+            </label>
             <select
-              name="category" value={formData.category} onChange={handleInputChange} required
+              name="category"
+              value={formData.category}
+              onChange={handleInputChange}
+              required
               className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
             >
-              {categories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">标签（逗号分隔）</label>
+            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
+              标签（逗号分隔）
+            </label>
             <input
-              type="text" name="tags" value={formData.tags} onChange={handleInputChange}
+              type="text"
+              name="tags"
+              value={formData.tags}
+              onChange={handleInputChange}
               placeholder="例如: 轻音乐, 助眠, 放松"
               className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
             />
@@ -208,11 +264,16 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-[11px] text-stone-500 font-medium">歌曲列表 ({formData.songIds.length} 首)</label>
+              <label className="block text-[11px] text-stone-500 font-medium">
+                歌曲列表 ({formData.songIds.length} 首)
+              </label>
               <button
-                type="button" onClick={() => setShowSearch(!showSearch)}
+                type="button"
+                onClick={() => setShowSearch(!showSearch)}
                 className={`flex items-center gap-1 text-[11px] px-3 py-1 rounded-md transition-all font-medium ${
-                  showSearch ? "bg-accent/15 text-accent" : "bg-accent/10 text-accent hover:bg-accent/15"
+                  showSearch
+                    ? "bg-accent/15 text-accent"
+                    : "bg-accent/10 text-accent hover:bg-accent/15"
                 }`}
               >
                 <Plus size={11} />
@@ -223,9 +284,18 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
             {formData.songIds.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {formData.songIds.map((songId) => (
-                  <span key={songId} className="inline-flex items-center px-2.5 py-1 bg-stone-200/50 rounded-md text-[11px] text-stone-600 font-mono">
+                  <span
+                    key={songId}
+                    className="inline-flex items-center px-2.5 py-1 bg-stone-200/50 rounded-md text-[11px] text-stone-600 font-mono"
+                  >
                     ID: {songId}
-                    <button type="button" onClick={() => handleRemoveSong(songId)} className="ml-1.5 text-stone-400 hover:text-stone-800 transition-colors">×</button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSong(songId)}
+                      className="ml-1.5 text-stone-400 hover:text-stone-800 transition-colors"
+                    >
+                      ×
+                    </button>
                   </span>
                 ))}
               </div>
@@ -233,7 +303,10 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
 
             {showSearch && (
               <div className="mt-4">
-                <SearchSongs onAddSong={handleAddSong} addedSongIds={formData.songIds} />
+                <SearchSongs
+                  onAddSong={handleAddSong}
+                  addedSongIds={formData.songIds}
+                />
               </div>
             )}
           </div>
@@ -241,13 +314,19 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              className="px-6 py-2.5 bg-accent text-white text-[13px] font-semibold rounded-lg hover:bg-accent-dim transition-all shadow-md shadow-accent/20"
+              disabled={saving}
+              className="px-6 py-2.5 bg-accent text-white text-[13px] font-semibold rounded-lg hover:bg-accent-dim transition-all shadow-md shadow-accent/20 disabled:opacity-50"
             >
-              {editingChannel ? "保存修改" : "创建频道"}
+              {saving
+                ? "保存中..."
+                : editingChannel
+                  ? "保存修改"
+                  : "创建频道"}
             </button>
             {editingChannel && (
               <button
-                type="button" onClick={resetForm}
+                type="button"
+                onClick={resetForm}
                 className="px-5 py-2.5 bg-stone-200/50 text-stone-600 rounded-lg hover:bg-stone-200 hover:text-stone-800 transition-all text-[13px]"
               >
                 取消
@@ -270,15 +349,23 @@ export function AdminForm({ onChannelSaved }: AdminFormProps) {
               >
                 <div className="flex items-center">
                   {channel.coverUrl ? (
-                    <img src={channel.coverUrl} alt={channel.name} className="w-10 h-10 rounded-lg ring-1 ring-border/20" />
+                    <img
+                      src={channel.coverUrl}
+                      alt={channel.name}
+                      className="w-10 h-10 rounded-lg ring-1 ring-border/20"
+                    />
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-elevated border border-border/30 flex items-center justify-center">
                       <Music2 size={16} className="text-stone-300" />
                     </div>
                   )}
                   <div className="ml-3">
-                    <h3 className="text-[13px] font-medium text-stone-800">{channel.name}</h3>
-                    <p className="text-[11px] text-stone-500">{channel.category} · {channel.songIds.length} 首歌</p>
+                    <h3 className="text-[13px] font-medium text-stone-800">
+                      {channel.name}
+                    </h3>
+                    <p className="text-[11px] text-stone-500">
+                      {channel.category} · {channel.songIds.length} 首歌
+                    </p>
                   </div>
                 </div>
 

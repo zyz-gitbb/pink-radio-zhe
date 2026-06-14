@@ -7,7 +7,7 @@ import { Home, Radio, Settings, User, LogOut, Loader2, Music, Disc3, BookOpen } 
 import { useUser } from "@/contexts/user-context";
 import { LoginModal } from "@/components/login-modal";
 import { logout } from "@/lib/api";
-import { getChannels, onChannelsChanged } from "@/lib/storage";
+import { getChannels } from "@/app/actions";
 import type { Channel } from "@/types";
 
 const navItems = [
@@ -26,14 +26,7 @@ export function Sidebar() {
 
   useEffect(() => {
     setMounted(true);
-    setChannels(getChannels());
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onChannelsChanged(() => {
-      setChannels(getChannels());
-    });
-    return unsubscribe;
+    getChannels().then(setChannels);
   }, []);
 
   const handleLogout = async () => {

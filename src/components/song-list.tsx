@@ -5,9 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Song } from "@/types";
 import { usePlayer } from "@/hooks/use-player";
 import { formatTime } from "@/lib/utils";
-import { Play, Pause, FolderPlus, Trash2 } from "lucide-react";
+import { Play, Pause, FolderPlus, Trash2, ListPlus } from "lucide-react";
 import { ChannelPickerPopover } from "@/components/channel-picker-popover";
-import { removeSongFromChannel } from "@/lib/storage";
 import { showToast } from "@/components/Toast";
 
 interface SongListProps {
@@ -22,7 +21,7 @@ interface SongListProps {
 }
 
 export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtra }: SongListProps) {
-  const { currentSong, isPlaying, setPlaylist } = usePlayer();
+  const { currentSong, isPlaying, setPlaylist, playNext } = usePlayer();
   const [pickerSong, setPickerSong] = useState<Song | null>(null);
   const addBtnRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const isChannelMode = !!channelId;
@@ -47,11 +46,8 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
   const handleRemoveClick = (e: React.MouseEvent, songId: number) => {
     e.stopPropagation();
     if (!channelId) return;
-    const ok = removeSongFromChannel(channelId, songId);
-    if (ok) {
-      showToast("已从频道中移出");
-      onRemoveSong?.(songId);
-    }
+    showToast("已从频道中移出");
+    onRemoveSong?.(songId);
   };
 
   return (
@@ -146,6 +142,15 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
                   {formatTime(song.duration || 0)}
                 </div>
 
+                {/* 下一首播放 — 悬浮淡入 */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); playNext(song); }}
+                  className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-6 h-6 rounded-md text-stone-400 hover:text-accent hover:bg-accent/10 transition-all duration-200 cursor-pointer"
+                  title="下一首播放"
+                >
+                  <ListPlus size={13} />
+                </button>
+
                 {/* 操作按钮 — 悬浮淡入 */}
                 <div className="w-8 flex items-center justify-center relative">
                   {isChannelMode ? (
@@ -180,6 +185,8 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
                         <ChannelPickerPopover
                           songId={song.id}
                           songName={song.name}
+                          songCoverUrl={coverUrl}
+                          songArtistName={artistNames}
                           triggerRef={{ current: addBtnRefs.current.get(song.id) ?? null }}
                           onClose={() => setPickerSong(null)}
                         />

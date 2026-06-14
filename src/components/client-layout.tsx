@@ -6,11 +6,13 @@ import { Sidebar } from "@/components/sidebar";
 import { Player } from "@/components/Player";
 import { Toast } from "@/components/Toast";
 import { BackgroundStamps } from "@/components/background-stamps";
+import { DataMigrator } from "@/components/data-migrator";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
       <PlayerProvider>
+        <DataMigrator />
         <BackgroundStamps />
         <div className="flex min-h-screen">
           <Sidebar />

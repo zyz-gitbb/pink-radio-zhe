@@ -18,6 +18,7 @@ const initialState: PlayerState = {
   playMode: "sequential",
   playlist: [],
   currentIndex: -1,
+  priorityQueue: [],
 };
 
 function playerReducer(
@@ -79,6 +80,24 @@ function playerReducer(
       };
 
     case "NEXT": {
+      // 优先队列绝对优先 — 不受随机/循环模式影响
+      if (state.priorityQueue.length > 0) {
+        const nextTrack = state.priorityQueue[0];
+        const remaining = state.priorityQueue.slice(1);
+        const newPlaylist = [...state.playlist];
+        const insertAt = state.currentIndex + 1;
+        newPlaylist.splice(insertAt, 0, nextTrack);
+
+        return {
+          ...state,
+          playlist: newPlaylist,
+          currentSong: nextTrack,
+          currentIndex: insertAt,
+          isPlaying: true,
+          priorityQueue: remaining,
+        };
+      }
+
       if (state.playlist.length === 0) return state;
 
       let nextIndex: number;
@@ -114,6 +133,14 @@ function playerReducer(
         currentSong: state.playlist[prevIndex],
         currentIndex: prevIndex,
         isPlaying: true,
+      };
+    }
+
+    case "PLAY_NEXT": {
+      const { song } = action;
+      return {
+        ...state,
+        priorityQueue: [...state.priorityQueue, song],
       };
     }
 

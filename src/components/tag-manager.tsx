@@ -4,17 +4,18 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Pencil, Trash2, X, Check, Tags } from "lucide-react";
 import {
-  getCategories,
   addCategory,
   renameCategory,
   deleteCategory,
-  getChannelsByCategory,
-} from "@/lib/storage";
+  getChannelCountByCategory,
+} from "@/app/actions";
 import { showToast } from "@/components/Toast";
 
 interface TagManagerProps {
   open: boolean;
   onClose: () => void;
+  categories: string[];
+  onMutate?: () => void;
 }
 
 const OVERLAY_VARIANTS = {
@@ -24,21 +25,36 @@ const OVERLAY_VARIANTS = {
 
 const PANEL_VARIANTS = {
   hidden: { opacity: 0, scale: 0.95, y: 16 },
-  visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring" as const, stiffness: 340, damping: 28, mass: 0.9 } },
-  exit: { opacity: 0, scale: 0.96, y: 10, transition: { duration: 0.18, ease: "easeIn" as const } },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 340, damping: 28, mass: 0.9 },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.96,
+    y: 10,
+    transition: { duration: 0.18, ease: "easeIn" as const },
+  },
 };
 
-export function TagManager({ open, onClose }: TagManagerProps) {
-  const [tags, setTags] = useState<string[]>([]);
+export function TagManager({ open, onClose, categories, onMutate }: TagManagerProps) {
+  const [tags, setTags] = useState<string[]>(categories);
   const [newTagName, setNewTagName] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
+  // 当外部 categories 变化时同步
+  useEffect(() => {
+    setTags(categories);
+  }, [categories]);
+
   useEffect(() => {
     if (open) {
-      setTags(getCategories());
       setNewTagName("");
       setEditingIndex(null);
       setEditingValue("");
@@ -52,17 +68,25 @@ export function TagManager({ open, onClose }: TagManagerProps) {
     }
   }, [editingIndex]);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const name = newTagName.trim();
     if (!name) return;
     if (tags.includes(name)) {
       showToast("这个标签已经存在啦~");
       return;
     }
-    const updated = addCategory(name);
-    setTags(updated);
-    setNewTagName("");
-    inputRef.current?.focus();
+    setSaving(true);
+    try {
+      const updated = await addCategory(name);
+      setTags(updated);
+      setNewTagName("");
+      inputRef.current?.focus();
+      onMutate?.();
+    } catch {
+      showToast("保存失败，请重试");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleStartRename = (index: number) => {
@@ -70,7 +94,7 @@ export function TagManager({ open, onClose }: TagManagerProps) {
     setEditingValue(tags[index]);
   };
 
-  const handleConfirmRename = () => {
+  const handleConfirmRename = async () => {
     if (editingIndex === null) return;
     const oldName = tags[editingIndex];
     const newName = editingValue.trim();
@@ -86,20 +110,36 @@ export function TagManager({ open, onClose }: TagManagerProps) {
       showToast("这个标签名已经存在啦~");
       return;
     }
-    const updated = renameCategory(oldName, newName);
-    setTags(updated);
-    setEditingIndex(null);
+    setSaving(true);
+    try {
+      const updated = await renameCategory(oldName, newName);
+      setTags(updated);
+      setEditingIndex(null);
+      onMutate?.();
+    } catch {
+      showToast("重命名失败，请重试");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = async (index: number) => {
     const tagName = tags[index];
-    const boundChannels = getChannelsByCategory(tagName);
-    if (boundChannels.length > 0) {
+    const count = await getChannelCountByCategory(tagName);
+    if (count > 0) {
       showToast("小宝请先清空频道再删除主题噢");
       return;
     }
-    const updated = deleteCategory(tagName);
-    setTags(updated);
+    setSaving(true);
+    try {
+      const updated = await deleteCategory(tagName);
+      setTags(updated);
+      onMutate?.();
+    } catch {
+      showToast("删除失败，请重试");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, action: "add" | "rename") => {
@@ -142,7 +182,9 @@ export function TagManager({ open, onClose }: TagManagerProps) {
                 <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center">
                   <Tags size={14} className="text-accent" />
                 </div>
-                <span className="text-[15px] font-semibold text-stone-800">管理标签</span>
+                <span className="text-[15px] font-semibold text-stone-800">
+                  管理标签
+                </span>
               </div>
               <button
                 onClick={onClose}
@@ -167,7 +209,7 @@ export function TagManager({ open, onClose }: TagManagerProps) {
                 />
                 <button
                   onClick={handleAdd}
-                  disabled={!newTagName.trim()}
+                  disabled={!newTagName.trim() || saving}
                   className="flex items-center gap-1.5 px-4 py-2 bg-accent text-white text-[12px] font-medium rounded-lg hover:bg-accent-dim transition-all shadow-sm shadow-accent/15 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus size={13} />
@@ -182,7 +224,9 @@ export function TagManager({ open, onClose }: TagManagerProps) {
             {/* 标签列表 */}
             <div className="px-6 py-3 max-h-72 overflow-y-auto">
               {tags.length === 0 ? (
-                <p className="text-center text-stone-400 text-[13px] py-6">暂无标签</p>
+                <p className="text-center text-stone-400 text-[13px] py-6">
+                  暂无标签
+                </p>
               ) : (
                 <div className="space-y-0.5">
                   {tags.map((tag, index) => (
@@ -211,7 +255,9 @@ export function TagManager({ open, onClose }: TagManagerProps) {
                         </div>
                       ) : (
                         <>
-                          <span className="text-[13px] text-stone-700">{tag}</span>
+                          <span className="text-[13px] text-stone-700">
+                            {tag}
+                          </span>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleStartRename(index)}
@@ -222,7 +268,8 @@ export function TagManager({ open, onClose }: TagManagerProps) {
                             </button>
                             <button
                               onClick={() => handleDelete(index)}
-                              className="w-6 h-6 rounded-md flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                              disabled={saving}
+                              className="w-6 h-6 rounded-md flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-40"
                               title="删除"
                             >
                               <Trash2 size={12} />
@@ -239,7 +286,7 @@ export function TagManager({ open, onClose }: TagManagerProps) {
             {/* 底部提示 */}
             <div className="px-6 py-3 bg-stone-50/60 border-t border-stone-200/40">
               <p className="text-[11px] text-stone-400 text-center">
-                标签会被保存到本地，刷新后依然保留
+                标签已同步至数据库，刷新后依然保留
               </p>
             </div>
           </motion.div>

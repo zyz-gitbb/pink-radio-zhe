@@ -70,4 +70,4 @@ Tailwind v4 with custom tokens in `src/styles/globals.css` (`@theme` block): `ba
 
 ## Spec
 
-Full product spec is in `SPEC.md` at the repo root — covers feature set, 5-phase dev plan, UI guidelines, and known risks.
+Full product spec is in `SPEC.md` at the repo root — covers feature set, 5-phase dev plan, UI guidelines, and known risks. 

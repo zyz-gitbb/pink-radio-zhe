@@ -78,6 +78,7 @@ export interface PlayerState {
   playMode: PlayMode;
   playlist: Song[];
   currentIndex: number;
+  priorityQueue: Song[];
 }
 
 export type PlayerAction =
@@ -92,7 +93,8 @@ export type PlayerAction =
   | { type: "SET_PROGRESS"; progress: number }
   | { type: "SET_DURATION"; duration: number }
   | { type: "SET_PLAY_MODE"; mode: PlayMode }
-  | { type: "REMOVE_SONG"; index: number };
+  | { type: "REMOVE_SONG"; index: number }
+  | { type: "PLAY_NEXT"; song: Song };
 
 // API 相关类型
 export interface NetEaseResponse<T> {

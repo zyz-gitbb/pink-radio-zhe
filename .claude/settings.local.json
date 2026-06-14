@@ -8,7 +8,16 @@
       "Bash(npx tsc *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npm install *)",
+      "Bash(npx drizzle-kit *)",
+      "Bash(node *)",
+      "Bash(npx next *)",
+      "Bash(npx tsx *)",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\")",
+      "Bash(findstr /I node.exe)",
+      "Bash(curl -s http://localhost:4000/song/detail?ids=1973665667)",
+      "Bash(curl *)"
     ]
   },
   "statusLine": {

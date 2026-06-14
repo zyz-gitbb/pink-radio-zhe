@@ -2,6 +2,7 @@
 
 import { useContext } from "react";
 import { PlayerContext } from "@/contexts/player-context";
+import { showToast } from "@/components/Toast";
 import type { Song, PlayMode } from "@/types";
 
 export function usePlayer() {
@@ -21,10 +22,16 @@ export function usePlayer() {
     duration: state.duration,
     playMode: state.playMode,
     playlist: state.playlist,
+    currentIndex: state.currentIndex,
+    priorityQueue: state.priorityQueue,
     audioRef,
 
     // 操作
     playSong: (song: Song) => dispatch({ type: "PLAY_SONG", song }),
+    playNext: (song: Song) => {
+      dispatch({ type: "PLAY_NEXT", song });
+      showToast(`"${song.name}" 已添加到下一首播放`);
+    },
     setPlaylist: (songs: Song[], startIndex?: number) =>
       dispatch({ type: "SET_PLAYLIST", songs, startIndex }),
     togglePlay: () => dispatch({ type: "TOGGLE_PLAY" }),

@@ -24,6 +24,9 @@ import {
   MessageSquare,
   X,
   FolderPlus,
+  ListMusic,
+  AudioLines,
+  ListPlus,
 } from "lucide-react";
 
 // ========== 3D 悬浮视差封面 ==========
@@ -105,6 +108,8 @@ export function Player() {
     progress,
     duration,
     playMode,
+    playlist,
+    currentIndex,
     audioRef,
     togglePlay,
     next,
@@ -113,13 +118,19 @@ export function Player() {
     setProgress,
     setDuration,
     setPlayMode,
+    playSong,
+    removeSong,
+    playNext,
     seek,
   } = usePlayer();
 
   const [showLyrics, setShowLyrics] = useState(false);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
   const addBtnRef = useRef<HTMLButtonElement>(null);
+  const queueRef = useRef<HTMLDivElement>(null);
+  const queueBtnRef = useRef<HTMLButtonElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const previousVolume = useRef(volume);
@@ -245,8 +256,25 @@ export function Player() {
     setPlayMode(playMode === "sequential" ? "random" : "sequential");
   };
 
+  // 点击外部关闭播放队列
+  useEffect(() => {
+    if (!isQueueOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        queueRef.current && !queueRef.current.contains(target) &&
+        queueBtnRef.current && !queueBtnRef.current.contains(target)
+      ) {
+        setIsQueueOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isQueueOpen]);
+
   const progressPercentage = duration > 0 ? (progress / duration) * 100 : 0;
   const coverUrl = currentSong?.al?.picUrl || currentSong?.album?.picUrl || currentSong?.coverUrl || '/default-cover.svg';
+  const artistName = (currentSong?.ar || currentSong?.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
 
   return (
     <>
@@ -288,7 +316,12 @@ export function Player() {
                   </div>
                 )}
                 {/* 音乐手账 */}
-                <MusicDiary songId={currentSong?.id} />
+                <MusicDiary
+                  songId={currentSong?.id}
+                  songName={currentSong?.name}
+                  songArtistName={artistName}
+                  songCoverUrl={coverUrl}
+                />
               </div>
               <div className="flex-1 max-w-lg h-[28rem]">
                 <Lyrics song={currentSong} currentTime={progress} onSeek={seek} />
@@ -323,6 +356,103 @@ export function Player() {
               songId={currentSong?.id ?? null}
               songName={currentSong?.name}
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 播放队列面板 */}
+      <AnimatePresence>
+        {isQueueOpen && (
+          <motion.div
+            ref={queueRef}
+            key="queue-panel"
+            className="fixed right-4 bottom-24 z-50 w-80 max-h-[60vh] flex flex-col bg-white/70 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden border border-white/50"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          >
+            {/* 头部 */}
+            <div className="px-4 pt-4 pb-2">
+              <h3 className="text-sm font-semibold text-stone-800">当前播放</h3>
+              <p className="text-[11px] text-stone-400 mt-0.5">
+                {playlist.length} 首歌曲
+              </p>
+            </div>
+
+            {/* 列表 */}
+            <div className="overflow-y-auto scrollbar-hide flex-1 p-2">
+              {playlist.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-stone-300">
+                  <ListMusic size={32} strokeWidth={1} />
+                  <p className="text-xs mt-2">队列为空</p>
+                </div>
+              ) : (
+                playlist.map((track, index) => {
+                  const isCurrent = index === currentIndex;
+                  const artists = (track.ar || track.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
+                  return (
+                    <div
+                      key={`${track.id}-${index}`}
+                      onClick={() => playSong(track)}
+                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
+                        isCurrent
+                          ? "bg-rose-50/60"
+                          : "hover:bg-black/[0.03]"
+                      }`}
+                    >
+                      {/* 当前播放指示器 */}
+                      <div className="w-4 flex-shrink-0 flex items-center justify-center">
+                        {isCurrent ? (
+                          <AudioLines size={14} className="text-accent animate-pulse" />
+                        ) : (
+                          <span className="text-[11px] text-stone-300 tabular-nums">
+                            {index + 1}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 歌曲信息 */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[13px] truncate ${isCurrent ? "font-semibold text-stone-800" : "text-stone-600"}`}>
+                          {track.name || "未知歌曲"}
+                        </p>
+                        <p className="text-[11px] text-stone-400 truncate">
+                          {artists}
+                        </p>
+                      </div>
+
+                      {/* 时长 + 操作按钮 */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span className="text-[10px] text-stone-300 tabular-nums font-mono group-hover:hidden">
+                          {formatTime(track.duration)}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            playNext(track);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-6 h-6 rounded-md text-stone-400 hover:text-accent hover:bg-accent/10 transition-all duration-200 cursor-pointer"
+                          title="下一首播放"
+                        >
+                          <ListPlus size={13} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeSong(index);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-6 h-6 rounded-md text-stone-400 hover:text-accent hover:bg-accent/10 transition-all duration-200 cursor-pointer"
+                          title="移出队列"
+                        >
+                          <X size={13} strokeWidth={2} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -444,6 +574,15 @@ export function Player() {
               title="评论"
             >
               <MessageSquare size={15} strokeWidth={1.5} />
+            </button>
+
+            <button
+              ref={queueBtnRef}
+              onClick={() => setIsQueueOpen(!isQueueOpen)}
+              className={`transition-colors ${isQueueOpen ? "text-accent" : "text-text-secondary/40 hover:text-text-secondary"}`}
+              title="播放队列"
+            >
+              <ListMusic size={15} strokeWidth={1.5} />
             </button>
 
             {currentSong && (
