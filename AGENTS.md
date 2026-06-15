@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project Overview
 
-`music-radio` — a personal music radio station built with Next.js App Router + React 19 + Tailwind CSS 4. It proxies the community NeteaseCloudMusicApi for song playback, search, lyrics, QR login, and recommendations. All data is stored in localStorage (no database). Chinese-only, PC-first, dark cyberpunk theme.
+`music-radio` — a personal music radio station built with Next.js App Router + React 19 + Tailwind CSS 4 + Drizzle ORM (SQLite). It proxies the community NeteaseCloudMusicApi for song playback, search, lyrics, QR login, and recommendations. Data is stored locally using SQLite and localStorage. Features a Premium Pink & Cream Beige (Sanrio watercolor) theme with fluid full-width layout, framer-motion animations, and 3D parallax lyrics. Chinese-only, PC-first.
 
 ## Commands
 
@@ -27,9 +27,9 @@ The app requires a local [NeteaseCloudMusicApi](https://github.com/Binaryify/Net
 
 `layout.tsx` → `ClientLayout` → `UserProvider` → `PlayerProvider` → `<Sidebar>` + `<main>` + `<Player>`
 
-- Fixed left sidebar (240px, `ml-60`)
-- Fixed bottom player bar (80px, `pb-28` on content)
-- Everything is `"use client"` — no SSR data fetching. The only server-side code is the API proxy route.
+- Full-width fluid layout (全宽流式布局) with bottom player.
+- Everything is `"use client"` for UI components. Server-side code includes the API proxy route and local SQLite database access (Drizzle ORM).
+- Implements Framer Motion for page transitions and spring animations.
 
 ### State management
 
@@ -45,7 +45,8 @@ Two React Contexts with `useReducer`:
 
 ### Data persistence
 
-- **Channels:** `src/lib/storage.ts` — localStorage CRUD with a custom `channels-changed` DOM event for cross-component sync.
+- **Database:** Local SQLite database managed by Drizzle ORM (`better-sqlite3`) for persistent data.
+- **Local Storage:** Used for client-side preferences and caching.
 - **User session:** Cookie-based (passed through the proxy).
 
 ### Key routes
@@ -62,7 +63,7 @@ Two React Contexts with `useReducer`:
 
 ### Theme / styling
 
-Tailwind v4 with custom tokens in `src/styles/globals.css` (`@theme` block): `background #09090b`, `surface #18181b`, `elevated #27272a`, `border #3f3f46`, `accent #ef4444`. Fonts: Inter, JetBrains Mono. Custom scrollbar utilities in globals.css.
+Tailwind v4 with custom tokens in `src/styles/globals.css` (`@theme` block): Premium Pink & Cream Beige theme (`background #F5F1E6`, `surface #FFFFFF`, `accent #D4858A`). Fonts: DM Sans, Space Grotesk. Features Sanrio watercolor background textures, skeleton loading shimmers, and complex CSS animations.
 
 ### Path aliases
 
