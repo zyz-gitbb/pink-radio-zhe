@@ -2,19 +2,19 @@
 
 @theme {
   /* — Premium Pink & Cream Beige 设计令牌 — */
-  --color-background: #F5F1E6;
-  --color-surface: #FFFFFF;
-  --color-elevated: #FAF8F3;
-  --color-border: #DFDAD1;
+  --color-background: #f5f1e6;
+  --color-surface: #ffffff;
+  --color-elevated: #faf8f3;
+  --color-border: #dfdad1;
 
-  --color-accent: #D4858A;
-  --color-accent-dim: #C06B70;
-  --color-accent-hover: #E8A0A5;
-  --color-warm-muted: #9C9488;
-  --color-warm-stone: #B8B0A4;
+  --color-accent: #d4858a;
+  --color-accent-dim: #c06b70;
+  --color-accent-hover: #e8a0a5;
+  --color-warm-muted: #9c9488;
+  --color-warm-stone: #b8b0a4;
 
-  --color-text-primary: #3D2E2E;
-  --color-text-secondary: #6B5B5B;
+  --color-text-primary: #3d2e2e;
+  --color-text-secondary: #6b5b5b;
 
   --font-sans: "DM Sans", system-ui, sans-serif;
   --font-mono: "Space Grotesk", monospace;
@@ -103,7 +103,7 @@
 
   /* 骨架屏微光扫过 */
   .animate-skeleton {
-    background: linear-gradient(90deg, #E5E0D8 25%, #EDE9E0 37%, #E5E0D8 63%);
+    background: linear-gradient(90deg, #e5e0d8 25%, #ede9e0 37%, #e5e0d8 63%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.8s ease-in-out infinite;
   }
@@ -112,5 +112,4 @@
   .animate-skeleton-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-
 }

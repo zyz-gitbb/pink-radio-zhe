@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useReducer,
-  useRef,
-  useEffect,
-  ReactNode,
-} from "react";
+import { createContext, useReducer, useRef, useEffect, ReactNode } from "react";
 import type { PlayerState, PlayerAction, Song } from "@/types";
 
 const initialState: PlayerState = {
@@ -21,16 +15,11 @@ const initialState: PlayerState = {
   priorityQueue: [],
 };
 
-function playerReducer(
-  state: PlayerState,
-  action: PlayerAction
-): PlayerState {
+function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
   switch (action.type) {
     case "PLAY_SONG": {
       const { song } = action;
-      const existingIndex = state.playlist.findIndex(
-        (s) => s.id === song.id
-      );
+      const existingIndex = state.playlist.findIndex((s) => s.id === song.id);
 
       if (existingIndex >= 0) {
         return {
@@ -122,10 +111,7 @@ function playerReducer(
       if (state.playMode === "random") {
         prevIndex = Math.floor(Math.random() * state.playlist.length);
       } else {
-        prevIndex =
-          state.currentIndex > 0
-            ? state.currentIndex - 1
-            : state.playlist.length - 1;
+        prevIndex = state.currentIndex > 0 ? state.currentIndex - 1 : state.playlist.length - 1;
       }
 
       return {

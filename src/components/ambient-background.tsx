@@ -8,13 +8,10 @@ interface AmbientBackgroundProps {
 
 export function AmbientBackground({ coverUrl }: AmbientBackgroundProps) {
   return (
-    <div
-      key={coverUrl}
-      className="absolute inset-0 z-0 overflow-hidden bg-[#fdfaf8]"
-    >
+    <div key={coverUrl} className="absolute inset-0 z-0 overflow-hidden bg-[#fdfaf8]">
       {/* 色块 A — 左上角，极致柔和的色彩氛围 */}
       <motion.div
-        className="absolute -top-[20%] -left-[10%] w-[80vw] h-[80vw] rounded-full pointer-events-none"
+        className="pointer-events-none absolute -top-[20%] -left-[10%] h-[80vw] w-[80vw] rounded-full"
         style={{
           backgroundImage: `url(${coverUrl})`,
           backgroundSize: "cover",
@@ -37,7 +34,7 @@ export function AmbientBackground({ coverUrl }: AmbientBackgroundProps) {
 
       {/* 色块 B — 右下角，反向微光呼吸 */}
       <motion.div
-        className="absolute -bottom-[20%] -right-[10%] w-[80vw] h-[80vw] rounded-full pointer-events-none"
+        className="pointer-events-none absolute -right-[10%] -bottom-[20%] h-[80vw] w-[80vw] rounded-full"
         style={{
           backgroundImage: `url(${coverUrl})`,
           backgroundSize: "cover",
@@ -59,7 +56,7 @@ export function AmbientBackground({ coverUrl }: AmbientBackgroundProps) {
       />
 
       {/* 高级粉奶油护眼层 — 压制高亮色彩，确保歌词高对比度 */}
-      <div className="absolute inset-0 bg-[#fdfaf8]/65 pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 bg-[#fdfaf8]/65" />
     </div>
   );
 }

@@ -2,11 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import {
-  getLoginQrKey,
-  createLoginQr,
-  checkLoginQrStatus,
-} from "@/lib/api";
+import { getLoginQrKey, createLoginQr, checkLoginQrStatus } from "@/lib/api";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -27,11 +23,19 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isOpenRef = useRef(isOpen);
 
-  useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
 
   const stopAllTimers = useCallback(() => {
-    if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
-    if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current); countdownTimerRef.current = null; }
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
   }, []);
 
   const resetState = useCallback(() => {
@@ -43,35 +47,49 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
     setCountdown(300);
   }, [stopAllTimers]);
 
-  const startPolling = useCallback((key: string) => {
-    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    pollTimerRef.current = setInterval(async () => {
-      if (!isOpenRef.current) {
-        if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
-        return;
-      }
-      try {
-        const result = await checkLoginQrStatus(key);
-        if (result.code === 803) {
-          setStatus("success"); stopAllTimers();
-          setTimeout(() => { onSuccess?.(); onClose(); }, 1500);
-        } else if (result.code === 800) {
-          setStatus("expired"); stopAllTimers();
-        } else if (result.code === 802) {
-          setStatus("scanning");
+  const startPolling = useCallback(
+    (key: string) => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      pollTimerRef.current = setInterval(async () => {
+        if (!isOpenRef.current) {
+          if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+          }
+          return;
         }
-      } catch (error) {
-        console.error("轮询检查失败:", error);
-      }
-    }, 2500);
-  }, [stopAllTimers, onSuccess, onClose]);
+        try {
+          const result = await checkLoginQrStatus(key);
+          if (result.code === 803) {
+            setStatus("success");
+            stopAllTimers();
+            setTimeout(() => {
+              onSuccess?.();
+              onClose();
+            }, 1500);
+          } else if (result.code === 800) {
+            setStatus("expired");
+            stopAllTimers();
+          } else if (result.code === 802) {
+            setStatus("scanning");
+          }
+        } catch (error) {
+          console.error("轮询检查失败:", error);
+        }
+      }, 2500);
+    },
+    [stopAllTimers, onSuccess, onClose]
+  );
 
   const startCountdown = useCallback(() => {
     if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     countdownTimerRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current); countdownTimerRef.current = null; }
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
+          }
           setStatus("expired");
           return 0;
         }
@@ -81,24 +99,39 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
   }, []);
 
   const initQrCode = useCallback(async () => {
-    resetState(); setStatus("loading");
+    resetState();
+    setStatus("loading");
     try {
       const key = await getLoginQrKey();
-      if (!key) { setStatus("error"); setErrorMessage("获取二维码失败，请重试"); return; }
+      if (!key) {
+        setStatus("error");
+        setErrorMessage("获取二维码失败，请重试");
+        return;
+      }
       qrKeyRef.current = key;
       const qrimg = await createLoginQr(key);
-      if (!qrimg) { setStatus("error"); setErrorMessage("生成二维码失败，请重试"); return; }
-      setQrImage(qrimg); setStatus("ready");
-      startPolling(key); startCountdown();
+      if (!qrimg) {
+        setStatus("error");
+        setErrorMessage("生成二维码失败，请重试");
+        return;
+      }
+      setQrImage(qrimg);
+      setStatus("ready");
+      startPolling(key);
+      startCountdown();
     } catch (error) {
       console.error("初始化二维码失败:", error);
-      setStatus("error"); setErrorMessage("初始化失败，请重试");
+      setStatus("error");
+      setErrorMessage("初始化失败，请重试");
     }
   }, [resetState, startPolling, startCountdown]);
 
   useEffect(() => {
-    if (isOpen) initQrCode(); else resetState();
-    return () => { stopAllTimers(); };
+    if (isOpen) initQrCode();
+    else resetState();
+    return () => {
+      stopAllTimers();
+    };
   }, [isOpen, initQrCode, resetState, stopAllTimers]);
 
   const formatCountdown = (seconds: number) => {
@@ -110,17 +143,26 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
   const getStatusDisplay = (): { icon: React.ReactNode; text: string } => {
     switch (status) {
       case "loading":
-        return { icon: <Loader2 className="w-14 h-14 text-accent animate-spin" />, text: "正在生成二维码..." };
+        return {
+          icon: <Loader2 className="text-accent h-14 w-14 animate-spin" />,
+          text: "正在生成二维码...",
+        };
       case "ready":
         return { icon: null, text: "请使用网易云 App 扫码登录" };
       case "scanning":
-        return { icon: <Loader2 className="w-14 h-14 text-accent animate-spin" />, text: "已扫码，请在手机上确认授权" };
+        return {
+          icon: <Loader2 className="text-accent h-14 w-14 animate-spin" />,
+          text: "已扫码，请在手机上确认授权",
+        };
       case "success":
-        return { icon: <CheckCircle className="w-14 h-14 text-emerald-500" />, text: "登录成功！" };
+        return { icon: <CheckCircle className="h-14 w-14 text-emerald-500" />, text: "登录成功！" };
       case "expired":
-        return { icon: <AlertCircle className="w-14 h-14 text-stone-400" />, text: "二维码已过期" };
+        return { icon: <AlertCircle className="h-14 w-14 text-stone-400" />, text: "二维码已过期" };
       case "error":
-        return { icon: <AlertCircle className="w-14 h-14 text-stone-400" />, text: errorMessage || "发生错误" };
+        return {
+          icon: <AlertCircle className="h-14 w-14 text-stone-400" />,
+          text: errorMessage || "发生错误",
+        };
       default:
         return { icon: null, text: "" };
     }
@@ -134,40 +176,44 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-surface border border-border/40 rounded-xl p-6 w-96 max-w-full mx-4 shadow-2xl">
+      <div className="bg-surface border-border/40 relative mx-4 w-96 max-w-full rounded-xl border p-6 shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-stone-400 hover:text-stone-800 transition-colors"
+          className="absolute top-4 right-4 text-stone-400 transition-colors hover:text-stone-800"
         >
           <X size={18} />
         </button>
 
-        <h2 className="text-lg font-medium text-stone-800 text-center mb-6">
-          网易云音乐登录
-        </h2>
+        <h2 className="mb-6 text-center text-lg font-medium text-stone-800">网易云音乐登录</h2>
 
-        <div className="flex flex-col items-center justify-center min-h-[280px]">
+        <div className="flex min-h-[280px] flex-col items-center justify-center">
           {status === "ready" && qrImage ? (
             <div className="relative">
-              <img src={qrImage} alt="登录二维码" className="w-48 h-48 rounded-lg ring-1 ring-border/30" />
+              <img
+                src={qrImage}
+                alt="登录二维码"
+                className="ring-border/30 h-48 w-48 rounded-lg ring-1"
+              />
               {countdown > 0 && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-stone-800/70 rounded-full backdrop-blur-sm">
-                  <span className="text-[11px] text-white font-mono">{formatCountdown(countdown)}</span>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-stone-800/70 px-3 py-1 backdrop-blur-sm">
+                  <span className="font-mono text-[11px] text-white">
+                    {formatCountdown(countdown)}
+                  </span>
                 </div>
               )}
             </div>
           ) : status === "success" ? (
             <div className="text-center">
               {statusDisplay.icon}
-              <p className="mt-4 text-emerald-600 font-medium text-[13px]">{statusDisplay.text}</p>
+              <p className="mt-4 text-[13px] font-medium text-emerald-600">{statusDisplay.text}</p>
             </div>
           ) : status === "expired" || status === "error" ? (
             <div className="text-center">
               {statusDisplay.icon}
-              <p className="mt-4 text-stone-500 text-[13px]">{statusDisplay.text}</p>
+              <p className="mt-4 text-[13px] text-stone-500">{statusDisplay.text}</p>
               <button
                 onClick={initQrCode}
-                className="mt-4 px-5 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/15 transition-all text-[13px] font-medium"
+                className="bg-accent/10 text-accent hover:bg-accent/15 mt-4 rounded-lg px-5 py-2 text-[13px] font-medium transition-all"
               >
                 重新生成
               </button>
@@ -175,18 +221,18 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
           ) : status === "scanning" ? (
             <div className="text-center">
               {statusDisplay.icon}
-              <p className="mt-4 text-stone-600 text-[13px]">{statusDisplay.text}</p>
+              <p className="mt-4 text-[13px] text-stone-600">{statusDisplay.text}</p>
             </div>
           ) : (
             <div className="text-center">
               {statusDisplay.icon}
-              <p className="mt-4 text-stone-500 text-[13px]">{statusDisplay.text}</p>
+              <p className="mt-4 text-[13px] text-stone-500">{statusDisplay.text}</p>
             </div>
           )}
         </div>
 
         {status === "ready" && (
-          <p className="text-center text-[11px] text-stone-400/60 mt-4">
+          <p className="mt-4 text-center text-[11px] text-stone-400/60">
             打开网易云 App → 扫一扫 → 扫描二维码
           </p>
         )}

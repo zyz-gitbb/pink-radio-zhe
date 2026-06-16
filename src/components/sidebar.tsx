@@ -36,23 +36,23 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="fixed left-0 top-0 w-60 h-full bg-surface/80 backdrop-blur-md border-r border-border/60 z-40 overflow-y-auto scrollbar-hide flex flex-col">
+      <aside className="bg-surface/80 border-border/60 scrollbar-hide fixed top-0 left-0 z-40 flex h-full w-60 flex-col overflow-y-auto border-r backdrop-blur-md">
         {/* Logo */}
         <div className="p-7 pb-5">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-dim flex items-center justify-center shadow-lg shadow-accent/15 group-hover:shadow-accent/25 transition-shadow">
+          <Link href="/" className="group flex items-center gap-2.5">
+            <div className="from-accent to-accent-dim shadow-accent/15 group-hover:shadow-accent/25 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br shadow-lg transition-shadow">
               <Disc3 size={18} className="text-white" strokeWidth={2} />
             </div>
-            <span className="text-base font-semibold text-text-primary tracking-tight">
+            <span className="text-text-primary text-base font-semibold tracking-tight">
               个人电台
             </span>
           </Link>
         </div>
 
         {/* 导航链接 */}
-        <nav className="px-3 flex-1">
+        <nav className="flex-1 px-3">
           <div className="mb-1">
-            <span className="px-4 text-[10px] font-medium text-text-secondary/60 uppercase tracking-[0.15em]">
+            <span className="text-text-secondary/60 px-4 text-[10px] font-medium tracking-[0.15em] uppercase">
               浏览
             </span>
           </div>
@@ -64,7 +64,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center px-4 py-2 mb-0.5 rounded-lg transition-all duration-200 group ${
+                className={`group mb-0.5 flex items-center rounded-lg px-4 py-2 transition-all duration-200 ${
                   isActive
                     ? "bg-accent/10 text-accent"
                     : "text-text-secondary hover:text-text-primary hover:bg-accent/5"
@@ -72,9 +72,7 @@ export function Sidebar() {
               >
                 <Icon size={17} className="mr-3 flex-shrink-0" strokeWidth={isActive ? 2 : 1.5} />
                 <span className="text-[13px] font-medium">{item.label}</span>
-                {isActive && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />
-                )}
+                {isActive && <div className="bg-accent ml-auto h-1.5 w-1.5 rounded-full" />}
               </Link>
             );
           })}
@@ -82,12 +80,12 @@ export function Sidebar() {
 
         {/* 频道列表 */}
         {mounted && channels.length > 0 && (
-          <div className="px-3 mt-4">
-            <div className="flex items-center justify-between px-4 mb-2">
-              <span className="text-[10px] font-medium text-text-secondary/60 uppercase tracking-[0.15em]">
+          <div className="mt-4 px-3">
+            <div className="mb-2 flex items-center justify-between px-4">
+              <span className="text-text-secondary/60 text-[10px] font-medium tracking-[0.15em] uppercase">
                 频道
               </span>
-              <span className="text-[10px] text-text-secondary/40 tabular-nums">
+              <span className="text-text-secondary/40 text-[10px] tabular-nums">
                 {channels.length}
               </span>
             </div>
@@ -98,15 +96,21 @@ export function Sidebar() {
                   <Link
                     key={channel.id}
                     href={`/channel/${channel.id}`}
-                    className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center rounded-lg px-4 py-2 transition-all duration-200 ${
                       isActive
                         ? "bg-accent/10 text-accent"
                         : "text-text-secondary hover:text-text-primary hover:bg-accent/5"
                     }`}
                   >
-                    <Music size={14} className="mr-3 flex-shrink-0" strokeWidth={isActive ? 2 : 1.5} />
-                    <span className="text-[13px] truncate flex-1">{channel.name}</span>
-                    <span className={`text-[10px] tabular-nums ${isActive ? "text-accent/50" : "text-text-secondary/30"}`}>
+                    <Music
+                      size={14}
+                      className="mr-3 flex-shrink-0"
+                      strokeWidth={isActive ? 2 : 1.5}
+                    />
+                    <span className="flex-1 truncate text-[13px]">{channel.name}</span>
+                    <span
+                      className={`text-[10px] tabular-nums ${isActive ? "text-accent/50" : "text-text-secondary/30"}`}
+                    >
                       {channel.songIds.length}
                     </span>
                   </Link>
@@ -117,9 +121,9 @@ export function Sidebar() {
         )}
 
         {/* 用户信息 */}
-        <div className="px-3 mt-auto pt-5 pb-24 border-t border-border/60">
+        <div className="border-border/60 mt-auto border-t px-3 pt-5 pb-24">
           {loading ? (
-            <div className="flex items-center px-4 py-2 text-text-secondary">
+            <div className="text-text-secondary flex items-center px-4 py-2">
               <Loader2 size={16} className="mr-3 animate-spin" />
               <span className="text-[13px]">加载中...</span>
             </div>
@@ -129,20 +133,20 @@ export function Sidebar() {
                 <img
                   src={user.avatarUrl}
                   alt={user.nickname}
-                  className="w-8 h-8 rounded-full ring-2 ring-accent/20"
+                  className="ring-accent/20 h-8 w-8 rounded-full ring-2"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "/default-avatar.svg";
                   }}
                 />
                 <div className="ml-3 overflow-hidden">
-                  <p className="text-[13px] text-text-primary font-medium truncate">
+                  <p className="text-text-primary truncate text-[13px] font-medium">
                     {user.nickname}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-2 text-text-secondary hover:text-text-primary rounded-lg transition-colors"
+                className="text-text-secondary hover:text-text-primary flex w-full items-center rounded-lg px-4 py-2 transition-colors"
               >
                 <LogOut size={15} className="mr-3" strokeWidth={1.5} />
                 <span className="text-[13px]">退出登录</span>
@@ -151,7 +155,7 @@ export function Sidebar() {
           ) : (
             <button
               onClick={() => setShowLoginModal(true)}
-              className="flex items-center w-full px-4 py-2.5 text-text-secondary hover:text-text-primary hover:bg-accent/5 rounded-lg transition-colors"
+              className="text-text-secondary hover:text-text-primary hover:bg-accent/5 flex w-full items-center rounded-lg px-4 py-2.5 transition-colors"
             >
               <User size={17} className="mr-3" strokeWidth={1.5} />
               <span className="text-[13px]">登录</span>

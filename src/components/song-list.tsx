@@ -20,7 +20,13 @@ interface SongListProps {
   headerExtra?: React.ReactNode;
 }
 
-export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtra }: SongListProps) {
+export function SongList({
+  songs,
+  onPlayAll,
+  channelId,
+  onRemoveSong,
+  headerExtra,
+}: SongListProps) {
   const { currentSong, isPlaying, setPlaylist, playNext } = usePlayer();
   const [pickerSong, setPickerSong] = useState<Song | null>(null);
   const addBtnRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -53,13 +59,13 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
   return (
     <div>
       {/* 播放全部按钮 */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h3 className="text-base font-medium text-stone-800">歌曲列表</h3>
         <div className="flex items-center gap-3">
           {headerExtra}
           <button
             onClick={handlePlayAll}
-            className="flex items-center gap-2 px-5 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-all text-[13px] font-medium"
+            className="bg-accent/10 text-accent hover:bg-accent/20 flex items-center gap-2 rounded-lg px-5 py-2 text-[13px] font-medium transition-all"
           >
             <Play size={14} fill="currentColor" />
             播放全部
@@ -68,10 +74,10 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
       </div>
 
       {/* 表头 */}
-      <div className="flex items-center px-4 py-2 text-[10px] text-stone-400 uppercase tracking-[0.15em] border-b border-border/30 mb-1 font-mono">
+      <div className="border-border/30 mb-1 flex items-center border-b px-4 py-2 font-mono text-[10px] tracking-[0.15em] text-stone-400 uppercase">
         <span className="w-8 text-center">#</span>
-        <span className="w-10 ml-3" />
-        <span className="flex-1 ml-3">歌曲名</span>
+        <span className="ml-3 w-10" />
+        <span className="ml-3 flex-1">歌曲名</span>
         <span className="w-48">专辑</span>
         <span className="w-16 text-right">时长</span>
         <span className="w-8" />
@@ -84,9 +90,11 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
           const isCurrentlyPlaying = isCurrentSong && isPlaying;
           const isPickerOpen = pickerSong?.id === song.id;
 
-          const coverUrl = song.al?.picUrl || song.album?.picUrl || song.coverUrl || '/default-cover.svg';
-          const albumName = song.al?.name || song.album?.name || '未知专辑';
-          const artistNames = (song.ar || song.artists || []).map((a) => a.name).join(", ") || '未知艺术家';
+          const coverUrl =
+            song.al?.picUrl || song.album?.picUrl || song.coverUrl || "/default-cover.svg";
+          const albumName = song.al?.name || song.album?.name || "未知专辑";
+          const artistNames =
+            (song.ar || song.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
 
           return (
             <motion.div
@@ -94,21 +102,26 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
               layout
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0, transition: { duration: 0.25, ease: "easeOut" } }}
+              exit={{
+                opacity: 0,
+                height: 0,
+                marginBottom: 0,
+                transition: { duration: 0.25, ease: "easeOut" },
+              }}
               className="overflow-hidden"
             >
               <div
                 onClick={() => handlePlaySong(song)}
-                className={`group flex items-center px-4 py-2.5 rounded-lg cursor-pointer transition-colors duration-150 ${
-                  isCurrentSong
-                    ? "bg-accent/[0.06]"
-                    : "hover:bg-accent/5"
+                className={`group flex cursor-pointer items-center rounded-lg px-4 py-2.5 transition-colors duration-150 ${
+                  isCurrentSong ? "bg-accent/[0.06]" : "hover:bg-accent/5"
                 }`}
               >
                 {/* 序号 */}
-                <span className={`w-8 text-center text-[13px] tabular-nums font-mono ${isCurrentSong ? "text-accent" : "text-stone-400/60"}`}>
+                <span
+                  className={`w-8 text-center font-mono text-[13px] tabular-nums ${isCurrentSong ? "text-accent" : "text-stone-400/60"}`}
+                >
                   {isCurrentlyPlaying ? (
-                    <Pause size={13} className="mx-auto text-accent" fill="currentColor" />
+                    <Pause size={13} className="text-accent mx-auto" fill="currentColor" />
                   ) : (
                     index + 1
                   )}
@@ -118,46 +131,49 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
                 <img
                   src={coverUrl}
                   alt={albumName}
-                  className="w-9 h-9 rounded ml-3 ring-1 ring-border/20"
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.svg'; }}
+                  className="ring-border/20 ml-3 h-9 w-9 rounded ring-1"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/default-cover.svg";
+                  }}
                 />
 
                 {/* 歌曲信息 */}
-                <div className="flex-1 ml-3 overflow-hidden">
-                  <p className={`text-[13px] truncate ${isCurrentSong ? "text-accent font-medium" : "text-stone-800"}`}>
-                    {song.name || '未知歌曲'}
+                <div className="ml-3 flex-1 overflow-hidden">
+                  <p
+                    className={`truncate text-[13px] ${isCurrentSong ? "text-accent font-medium" : "text-stone-800"}`}
+                  >
+                    {song.name || "未知歌曲"}
                   </p>
-                  <p className="text-[11px] text-stone-500 truncate">
-                    {artistNames}
-                  </p>
+                  <p className="truncate text-[11px] text-stone-500">{artistNames}</p>
                 </div>
 
                 {/* 专辑 */}
-                <div className="w-48 text-[12px] text-stone-400 truncate">
-                  {albumName}
-                </div>
+                <div className="w-48 truncate text-[12px] text-stone-400">{albumName}</div>
 
                 {/* 时长 */}
-                <div className="w-16 text-[12px] text-stone-400/70 text-right tabular-nums font-mono">
+                <div className="w-16 text-right font-mono text-[12px] text-stone-400/70 tabular-nums">
                   {formatTime(song.duration || 0)}
                 </div>
 
                 {/* 下一首播放 — 悬浮淡入 */}
                 <button
-                  onClick={(e) => { e.stopPropagation(); playNext(song); }}
-                  className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-6 h-6 rounded-md text-stone-400 hover:text-accent hover:bg-accent/10 transition-all duration-200 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playNext(song);
+                  }}
+                  className="hover:text-accent hover:bg-accent/10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-stone-400 opacity-0 transition-all duration-200 group-hover:opacity-100"
                   title="下一首播放"
                 >
                   <ListPlus size={13} />
                 </button>
 
                 {/* 操作按钮 — 悬浮淡入 */}
-                <div className="w-8 flex items-center justify-center relative">
+                <div className="relative flex w-8 items-center justify-center">
                   {isChannelMode ? (
                     /* 移出频道按钮 */
                     <button
                       onClick={(e) => handleRemoveClick(e, song.id)}
-                      className="w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 text-stone-400 hover:text-red-400/80 hover:bg-red-500/8 transition-all duration-300"
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-stone-400 opacity-0 transition-all duration-300 group-hover:opacity-100 hover:bg-red-500/8 hover:text-red-400/80"
                       title="移出频道"
                     >
                       <Trash2 size={13} />
@@ -171,10 +187,10 @@ export function SongList({ songs, onPlayAll, channelId, onRemoveSong, headerExtr
                           else addBtnRefs.current.delete(song.id);
                         }}
                         onClick={(e) => handleAddClick(e, song)}
-                        className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 ${
+                        className={`flex h-6 w-6 items-center justify-center rounded-md transition-all duration-200 ${
                           isPickerOpen
-                            ? "opacity-100 bg-accent/10 text-accent"
-                            : "opacity-0 group-hover:opacity-100 text-stone-400 hover:text-accent hover:bg-accent/10"
+                            ? "bg-accent/10 text-accent opacity-100"
+                            : "hover:text-accent hover:bg-accent/10 text-stone-400 opacity-0 group-hover:opacity-100"
                         }`}
                         title="收录到频道"
                       >

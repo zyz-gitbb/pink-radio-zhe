@@ -163,14 +163,11 @@ export function TagManager({ open, onClose, categories, onMutate }: TagManagerPr
           exit="hidden"
         >
           {/* 遮罩 */}
-          <motion.div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={onClose}
-          />
+          <motion.div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
           {/* 弹窗面板 */}
           <motion.div
-            className="relative z-10 w-full max-w-md mx-4 bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_24px_80px_rgba(61,46,46,0.12),0_0_0_1px_rgba(223,218,209,0.5)] overflow-hidden"
+            className="relative z-10 mx-4 w-full max-w-md overflow-hidden rounded-2xl bg-white/90 shadow-[0_24px_80px_rgba(61,46,46,0.12),0_0_0_1px_rgba(223,218,209,0.5)] backdrop-blur-xl"
             variants={PANEL_VARIANTS}
             initial="hidden"
             animate="visible"
@@ -179,16 +176,14 @@ export function TagManager({ open, onClose, categories, onMutate }: TagManagerPr
             {/* 顶部 */}
             <div className="flex items-center justify-between px-6 pt-5 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center">
+                <div className="bg-accent/10 flex h-7 w-7 items-center justify-center rounded-lg">
                   <Tags size={14} className="text-accent" />
                 </div>
-                <span className="text-[15px] font-semibold text-stone-800">
-                  管理标签
-                </span>
+                <span className="text-[15px] font-semibold text-stone-800">管理标签</span>
               </div>
               <button
                 onClick={onClose}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-all"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-stone-400 transition-all hover:bg-stone-200/60 hover:text-stone-700"
               >
                 <X size={15} />
               </button>
@@ -205,12 +200,12 @@ export function TagManager({ open, onClose, categories, onMutate }: TagManagerPr
                   onKeyDown={(e) => handleKeyDown(e, "add")}
                   placeholder="输入新标签名称…"
                   maxLength={12}
-                  className="flex-1 px-3.5 py-2 bg-stone-100/80 border border-stone-200/60 rounded-lg text-stone-800 placeholder-stone-400/60 focus:outline-none focus:border-accent/40 focus:bg-white transition-all text-[13px]"
+                  className="focus:border-accent/40 flex-1 rounded-lg border border-stone-200/60 bg-stone-100/80 px-3.5 py-2 text-[13px] text-stone-800 placeholder-stone-400/60 transition-all focus:bg-white focus:outline-none"
                 />
                 <button
                   onClick={handleAdd}
                   disabled={!newTagName.trim() || saving}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-accent text-white text-[12px] font-medium rounded-lg hover:bg-accent-dim transition-all shadow-sm shadow-accent/15 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="bg-accent hover:bg-accent-dim shadow-accent/15 flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-medium text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Plus size={13} />
                   新增
@@ -222,20 +217,18 @@ export function TagManager({ open, onClose, categories, onMutate }: TagManagerPr
             <div className="mx-6 h-px bg-stone-200/60" />
 
             {/* 标签列表 */}
-            <div className="px-6 py-3 max-h-72 overflow-y-auto">
+            <div className="max-h-72 overflow-y-auto px-6 py-3">
               {tags.length === 0 ? (
-                <p className="text-center text-stone-400 text-[13px] py-6">
-                  暂无标签
-                </p>
+                <p className="py-6 text-center text-[13px] text-stone-400">暂无标签</p>
               ) : (
                 <div className="space-y-0.5">
                   {tags.map((tag, index) => (
                     <div
                       key={tag}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-stone-100/60 transition-colors group"
+                      className="group flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-stone-100/60"
                     >
                       {editingIndex === index ? (
-                        <div className="flex items-center gap-2 flex-1">
+                        <div className="flex flex-1 items-center gap-2">
                           <input
                             ref={editInputRef}
                             type="text"
@@ -244,24 +237,22 @@ export function TagManager({ open, onClose, categories, onMutate }: TagManagerPr
                             onKeyDown={(e) => handleKeyDown(e, "rename")}
                             onBlur={handleConfirmRename}
                             maxLength={12}
-                            className="flex-1 px-2.5 py-1 bg-white border border-accent/30 rounded-md text-stone-800 focus:outline-none text-[13px]"
+                            className="border-accent/30 flex-1 rounded-md border bg-white px-2.5 py-1 text-[13px] text-stone-800 focus:outline-none"
                           />
                           <button
                             onClick={handleConfirmRename}
-                            className="w-6 h-6 rounded-md flex items-center justify-center text-accent hover:bg-accent/10 transition-colors"
+                            className="text-accent hover:bg-accent/10 flex h-6 w-6 items-center justify-center rounded-md transition-colors"
                           >
                             <Check size={13} />
                           </button>
                         </div>
                       ) : (
                         <>
-                          <span className="text-[13px] text-stone-700">
-                            {tag}
-                          </span>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[13px] text-stone-700">{tag}</span>
+                          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                             <button
                               onClick={() => handleStartRename(index)}
-                              className="w-6 h-6 rounded-md flex items-center justify-center text-stone-400 hover:text-accent hover:bg-accent/10 transition-all"
+                              className="hover:text-accent hover:bg-accent/10 flex h-6 w-6 items-center justify-center rounded-md text-stone-400 transition-all"
                               title="重命名"
                             >
                               <Pencil size={12} />
@@ -269,7 +260,7 @@ export function TagManager({ open, onClose, categories, onMutate }: TagManagerPr
                             <button
                               onClick={() => handleDelete(index)}
                               disabled={saving}
-                              className="w-6 h-6 rounded-md flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-40"
+                              className="flex h-6 w-6 items-center justify-center rounded-md text-stone-400 transition-all hover:bg-red-500/10 hover:text-red-500 disabled:opacity-40"
                               title="删除"
                             >
                               <Trash2 size={12} />
@@ -284,8 +275,8 @@ export function TagManager({ open, onClose, categories, onMutate }: TagManagerPr
             </div>
 
             {/* 底部提示 */}
-            <div className="px-6 py-3 bg-stone-50/60 border-t border-stone-200/40">
-              <p className="text-[11px] text-stone-400 text-center">
+            <div className="border-t border-stone-200/40 bg-stone-50/60 px-6 py-3">
+              <p className="text-center text-[11px] text-stone-400">
                 标签已同步至数据库，刷新后依然保留
               </p>
             </div>

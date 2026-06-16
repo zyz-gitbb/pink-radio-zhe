@@ -86,7 +86,7 @@ export function ChannelPickerPopover({
   return createPortal(
     <motion.div
       ref={panelRef}
-      className="fixed z-[200] w-56 rounded-xl bg-[#fdfaf8]/95 backdrop-blur-xl shadow-[0_12px_40px_rgba(61,46,46,0.12),0_0_0_1px_rgba(223,218,209,0.5)] overflow-hidden"
+      className="fixed z-[200] w-56 overflow-hidden rounded-xl bg-[#fdfaf8]/95 shadow-[0_12px_40px_rgba(61,46,46,0.12),0_0_0_1px_rgba(223,218,209,0.5)] backdrop-blur-xl"
       style={{
         bottom: pos.bottom,
         right: pos.right,
@@ -101,21 +101,17 @@ export function ChannelPickerPopover({
       <div className="px-4 pt-3 pb-2">
         <div className="flex items-center gap-2">
           <FolderPlus size={13} className="text-accent" />
-          <span className="text-[12px] font-semibold text-stone-700">
-            收录至频道
-          </span>
+          <span className="text-[12px] font-semibold text-stone-700">收录至频道</span>
         </div>
-        <p className="text-[10px] text-stone-400 mt-0.5 truncate">{songName}</p>
+        <p className="mt-0.5 truncate text-[10px] text-stone-400">{songName}</p>
       </div>
 
-      <div className="h-px bg-stone-200/60 mx-3" />
+      <div className="mx-3 h-px bg-stone-200/60" />
 
       {/* 频道列表 */}
-      <div className="py-1.5 max-h-52 overflow-y-auto">
+      <div className="max-h-52 overflow-y-auto py-1.5">
         {channels.length === 0 ? (
-          <p className="text-center text-[12px] text-stone-400 py-4">
-            暂无频道，请先创建
-          </p>
+          <p className="py-4 text-center text-[12px] text-stone-400">暂无频道，请先创建</p>
         ) : (
           channels.map((ch) => (
             <button
@@ -124,24 +120,22 @@ export function ChannelPickerPopover({
                 e.stopPropagation();
                 handleSelect(ch.id);
               }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-accent/8 transition-colors text-left"
+              className="hover:bg-accent/8 flex w-full items-center gap-2.5 px-4 py-2 text-left transition-colors"
             >
               {ch.coverUrl ? (
                 <img
                   src={ch.coverUrl}
                   alt={ch.name}
-                  className="w-7 h-7 rounded-md object-cover ring-1 ring-border/20 flex-shrink-0"
+                  className="ring-border/20 h-7 w-7 flex-shrink-0 rounded-md object-cover ring-1"
                 />
               ) : (
-                <div className="w-7 h-7 rounded-md bg-elevated border border-border/30 flex items-center justify-center flex-shrink-0">
+                <div className="bg-elevated border-border/30 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border">
                   <Music2 size={12} className="text-stone-300" />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] text-stone-700 truncate">{ch.name}</p>
-                <p className="text-[10px] text-stone-400">
-                  {ch.songIds.length} 首歌
-                </p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12px] text-stone-700">{ch.name}</p>
+                <p className="text-[10px] text-stone-400">{ch.songIds.length} 首歌</p>
               </div>
             </button>
           ))

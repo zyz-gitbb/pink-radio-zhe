@@ -37,7 +37,7 @@ export function getSongAlbum(song: Song): Album | undefined {
 
 // 辅助函数：获取歌曲封面 URL（兼容两种格式）
 export function getSongCoverUrl(song: Song): string {
-  return song.al?.picUrl || song.album?.picUrl || song.coverUrl || '/default-cover.svg';
+  return song.al?.picUrl || song.album?.picUrl || song.coverUrl || "/default-cover.svg";
 }
 
 // 辅助函数：获取歌曲艺术家名称（兼容两种格式）

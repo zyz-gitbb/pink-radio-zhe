@@ -65,22 +65,22 @@ export function ChannelContent({ channel }: ChannelContentProps) {
 
   if (songsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-accent/40 animate-pulse" />
-          <span className="text-stone-400 text-[13px]">加载歌曲中...</span>
+          <div className="bg-accent/40 h-2 w-2 animate-pulse rounded-full" />
+          <span className="text-[13px] text-stone-400">加载歌曲中...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="relative min-h-screen">
       {/* 沉浸式微光背景 */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(212,133,138,0.12),_transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(223,218,209,0.3),_transparent_60%)]" />
-        <div className="absolute inset-0 bg-background" style={{ opacity: 0.85 }} />
+        <div className="bg-background absolute inset-0" style={{ opacity: 0.85 }} />
         <div
           className="absolute inset-0 opacity-[0.025]"
           style={{
@@ -95,9 +95,9 @@ export function ChannelContent({ channel }: ChannelContentProps) {
       <div className="px-12 pt-8">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-stone-400 hover:text-stone-700 transition-colors mb-6 group"
+          className="group mb-6 flex items-center gap-2 text-sm text-stone-400 transition-colors hover:text-stone-700"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span>返回</span>
         </button>
       </div>
@@ -109,9 +109,9 @@ export function ChannelContent({ channel }: ChannelContentProps) {
             <img
               src={channel.coverUrl}
               alt=""
-              className="w-full h-full object-cover blur-[80px] scale-125 opacity-20 saturate-50"
+              className="h-full w-full scale-125 object-cover opacity-20 blur-[80px] saturate-50"
             />
-            <div className="absolute inset-0 bg-background/70" />
+            <div className="bg-background/70 absolute inset-0" />
           </div>
         )}
 
@@ -123,42 +123,42 @@ export function ChannelContent({ channel }: ChannelContentProps) {
                   <img
                     src={channel.coverUrl}
                     alt={channel.name}
-                    className="w-48 h-48 rounded-2xl object-cover ring-1 ring-black/5 shadow-[0_20px_50px_rgba(212,133,138,0.15)]"
+                    className="h-48 w-48 rounded-2xl object-cover shadow-[0_20px_50px_rgba(212,133,138,0.15)] ring-1 ring-black/5"
                   />
-                  <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-accent/10 to-transparent -z-10 blur-2xl" />
+                  <div className="from-accent/10 absolute -inset-2 -z-10 rounded-3xl bg-gradient-to-br to-transparent blur-2xl" />
                 </div>
               ) : (
-                <div className="w-48 h-48 rounded-2xl bg-elevated border border-border/30 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.06)]">
+                <div className="bg-elevated border-border/30 flex h-48 w-48 items-center justify-center rounded-2xl border shadow-[0_20px_50px_rgba(0,0,0,0.06)]">
                   <Music2 size={40} className="text-stone-300" strokeWidth={1} />
                 </div>
               )}
             </div>
 
             <div className="flex-1 pb-2">
-              <p className="text-[11px] font-medium text-accent tracking-wide uppercase mb-2">
+              <p className="text-accent mb-2 text-[11px] font-medium tracking-wide uppercase">
                 频道
               </p>
-              <h1 className="text-3xl font-bold text-stone-800 mb-2 tracking-tight">
+              <h1 className="mb-2 text-3xl font-bold tracking-tight text-stone-800">
                 {channel.name}
               </h1>
               {channel.description && (
-                <p className="text-stone-500 mb-4 text-[13px] leading-relaxed max-w-xl">
+                <p className="mb-4 max-w-xl text-[13px] leading-relaxed text-stone-500">
                   {channel.description}
                 </p>
               )}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 bg-accent/10 text-accent rounded-md text-[11px] font-medium">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-accent/10 text-accent rounded-md px-2.5 py-0.5 text-[11px] font-medium">
                   {channel.category}
                 </span>
                 {channel.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2.5 py-0.5 bg-stone-200/60 text-stone-500 rounded-md text-[11px]"
+                    className="rounded-md bg-stone-200/60 px-2.5 py-0.5 text-[11px] text-stone-500"
                   >
                     {tag}
                   </span>
                 ))}
-                <span className="text-stone-400 text-[11px] ml-1">
+                <span className="ml-1 text-[11px] text-stone-400">
                   {channel.songIds.length} 首歌
                 </span>
               </div>
@@ -183,13 +183,13 @@ export function ChannelContent({ channel }: ChannelContentProps) {
             headerExtra={
               <div className="flex items-center gap-3">
                 {addSuccess && (
-                  <span className="flex items-center gap-1 text-accent text-[12px] font-medium animate-pulse">
+                  <span className="text-accent flex animate-pulse items-center gap-1 text-[12px] font-medium">
                     <Check size={13} /> 已添加
                   </span>
                 )}
                 <button
                   onClick={() => setShowSearch(!showSearch)}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 text-[13px] rounded-lg transition-all font-medium ${
+                  className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-[13px] font-medium transition-all ${
                     showSearch
                       ? "bg-accent/15 text-accent"
                       : "bg-accent/10 text-accent hover:bg-accent/15"
@@ -202,15 +202,15 @@ export function ChannelContent({ channel }: ChannelContentProps) {
             }
           />
         ) : (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-surface border border-border/30 flex items-center justify-center mx-auto mb-4">
+          <div className="py-20 text-center">
+            <div className="bg-surface border-border/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border">
               <Music2 size={24} className="text-stone-300" strokeWidth={1} />
             </div>
-            <p className="text-stone-500 text-[13px] mb-4">暂无歌曲</p>
+            <p className="mb-4 text-[13px] text-stone-500">暂无歌曲</p>
             {!showSearch && (
               <button
                 onClick={() => setShowSearch(true)}
-                className="inline-flex items-center gap-1.5 px-5 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/15 text-[13px] font-medium transition-all"
+                className="bg-accent/10 text-accent hover:bg-accent/15 inline-flex items-center gap-1.5 rounded-lg px-5 py-2 text-[13px] font-medium transition-all"
               >
                 <Plus size={14} />
                 添加第一首歌

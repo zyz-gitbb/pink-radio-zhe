@@ -23,22 +23,31 @@ export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
   const isUserScrollingRef = useRef(false);
 
   useEffect(() => {
-    if (!song) { setLyrics([]); return; }
+    if (!song) {
+      setLyrics([]);
+      return;
+    }
     let cancelled = false;
     const fetchLyrics = async () => {
       setLoading(true);
       const lrcText = await getSongLyric(song.id);
-      if (!cancelled) { setLyrics(parseLrc(lrcText || "")); setLoading(false); }
+      if (!cancelled) {
+        setLyrics(parseLrc(lrcText || ""));
+        setLoading(false);
+      }
     };
     fetchLyrics();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [song?.id]);
 
   const activeIndex = useMemo(() => {
     if (lyrics.length === 0) return -1;
     let idx = -1;
     for (let i = 0; i < lyrics.length; i++) {
-      if (currentTime >= lyrics[i].time) idx = i; else break;
+      if (currentTime >= lyrics[i].time) idx = i;
+      else break;
     }
     return idx;
   }, [lyrics, currentTime]);
@@ -65,7 +74,8 @@ export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
       if (!container || lastActiveIndex.current < 0) return;
       const activeLine = lineRefs.current.get(lastActiveIndex.current);
       if (!activeLine) return;
-      const targetTop = activeLine.offsetTop - container.clientHeight / 2 + activeLine.offsetHeight / 2;
+      const targetTop =
+        activeLine.offsetTop - container.clientHeight / 2 + activeLine.offsetHeight / 2;
       container.scrollTo({ top: targetTop, behavior: "smooth" });
     }, 3500);
   }, []);
@@ -96,19 +106,31 @@ export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
   }, [activeIndex]);
 
   if (!song) {
-    return <div className="flex items-center justify-center h-full text-stone-400 text-[13px]">暂无歌曲播放</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-[13px] text-stone-400">
+        暂无歌曲播放
+      </div>
+    );
   }
   if (loading) {
-    return <div className="flex items-center justify-center h-full text-stone-400 text-[13px]">加载歌词中...</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-[13px] text-stone-400">
+        加载歌词中...
+      </div>
+    );
   }
   if (lyrics.length === 0) {
-    return <div className="flex items-center justify-center h-full text-stone-400/60 text-[13px]">暂无歌词</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-[13px] text-stone-400/60">
+        暂无歌词
+      </div>
+    );
   }
 
   return (
     <div
       ref={containerRef}
-      className="h-full overflow-y-auto scrollbar-hide py-16"
+      className="scrollbar-hide h-full overflow-y-auto py-16"
       style={{ maskImage: "linear-gradient(transparent, black 12%, black 88%, transparent)" }}
       onWheel={handleUserScroll}
       onTouchMove={handleUserScroll}
@@ -133,9 +155,9 @@ export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
             }}
             transition={{ duration: 0.3 }}
             onClick={() => onSeek?.(line.time)}
-            className={`py-3 px-4 text-center text-xl cursor-pointer origin-center ${
+            className={`origin-center cursor-pointer px-4 py-3 text-center text-xl ${
               isActive
-                ? "text-stone-800 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                ? "font-bold text-stone-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
                 : "text-stone-400"
             }`}
           >

@@ -207,30 +207,27 @@ export function DataMigrator() {
   if (status === "idle") return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center pointer-events-none">
+    <div className="pointer-events-none fixed top-0 right-0 left-0 z-[9999] flex items-center justify-center">
       <div
-        className={`
-          mt-3 px-5 py-2.5 rounded-xl
-          bg-white/90 backdrop-blur-xl
-          border border-stone-200/60
-          shadow-[0_4px_20px_rgba(0,0,0,0.06)]
-          flex items-center gap-3
-          text-[12px] text-stone-600
-          transition-all duration-500
-          ${status === "done" ? "opacity-0 translate-y-[-8px]" : "opacity-100 translate-y-0"}
-        `}
+        className={`mt-3 flex items-center gap-3 rounded-xl border border-stone-200/60 bg-white/90 px-5 py-2.5 text-[12px] text-stone-600 shadow-[0_4px_20px_rgba(0,0,0,0.06)] backdrop-blur-xl transition-all duration-500 ${status === "done" ? "translate-y-[-8px] opacity-0" : "translate-y-0 opacity-100"} `}
       >
         {status === "migrating" && (
           <>
-            <div className="w-3.5 h-3.5 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
+            <div className="border-accent/30 border-t-accent h-3.5 w-3.5 animate-spin rounded-full border-2" />
             <span>{progress || "正在同步本地数据..."}</span>
           </>
         )}
         {status === "done" && (
           <>
-            <div className="w-3.5 h-3.5 rounded-full bg-green-400 flex items-center justify-center">
+            <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-green-400">
               <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <span>数据同步完成 ✓</span>

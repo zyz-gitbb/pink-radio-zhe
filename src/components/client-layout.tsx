@@ -16,7 +16,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         <BackgroundStamps />
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 ml-60 pb-32">{children}</main>
+          <main className="ml-60 flex-1 pb-32">{children}</main>
         </div>
         <Player />
         <Toast />

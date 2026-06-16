@@ -46,9 +46,7 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -133,14 +131,14 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
   return (
     <div className="space-y-8">
       {/* 表单 */}
-      <div className="bg-surface/70 backdrop-blur-md border border-border/40 rounded-xl p-6">
-        <h2 className="text-base font-medium text-stone-800 mb-5">
+      <div className="bg-surface/70 border-border/40 rounded-xl border p-6 backdrop-blur-md">
+        <h2 className="mb-5 text-base font-medium text-stone-800">
           {editingChannel ? "编辑频道" : "创建频道"}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
+            <label className="mb-1.5 block text-[11px] font-medium text-stone-500">
               频道名称 *
             </label>
             <input
@@ -149,27 +147,23 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
+              className="bg-elevated border-border/50 focus:border-accent/40 w-full rounded-lg border px-4 py-2.5 text-[13px] text-stone-800 placeholder-stone-400/50 transition-colors focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
-              频道描述
-            </label>
+            <label className="mb-1.5 block text-[11px] font-medium text-stone-500">频道描述</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleInputChange}
               rows={3}
-              className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors resize-none text-[13px]"
+              className="bg-elevated border-border/50 focus:border-accent/40 w-full resize-none rounded-lg border px-4 py-2.5 text-[13px] text-stone-800 placeholder-stone-400/50 transition-colors focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
-              封面图
-            </label>
+            <label className="mb-1.5 block text-[11px] font-medium text-stone-500">封面图</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -177,7 +171,7 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
                 value={formData.coverUrl}
                 onChange={handleInputChange}
                 placeholder="粘贴网络图片链接，或点击右侧按钮上传本地图片"
-                className="flex-1 px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
+                className="bg-elevated border-border/50 focus:border-accent/40 flex-1 rounded-lg border px-4 py-2.5 text-[13px] text-stone-800 placeholder-stone-400/50 transition-colors focus:outline-none"
               />
               <input
                 ref={fileInputRef}
@@ -189,7 +183,7 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-elevated border border-border/50 text-stone-400 hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-all"
+                className="bg-elevated border-border/50 hover:text-accent hover:border-accent/40 hover:bg-accent/5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border text-stone-400 transition-all"
                 title="上传本地图片"
               >
                 <ImagePlus size={16} />
@@ -197,10 +191,8 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
               {formData.coverUrl && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, coverUrl: "" }))
-                  }
-                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-elevated border border-border/50 text-stone-400 hover:text-red-400 hover:border-red-300/40 hover:bg-red-50 transition-all"
+                  onClick={() => setFormData((prev) => ({ ...prev, coverUrl: "" }))}
+                  className="bg-elevated border-border/50 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border text-stone-400 transition-all hover:border-red-300/40 hover:bg-red-50 hover:text-red-400"
                   title="清除封面"
                 >
                   <X size={16} />
@@ -212,17 +204,15 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
                 <img
                   src={formData.coverUrl}
                   alt="封面预览"
-                  className="w-24 h-24 object-cover rounded-xl shadow-sm border border-stone-200/50"
+                  className="h-24 w-24 rounded-xl border border-stone-200/50 object-cover shadow-sm"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
                 <div className="pt-1">
                   <p className="text-[11px] text-stone-400">封面预览</p>
-                  <p className="text-[10px] text-stone-400/60 mt-0.5">
-                    {formData.coverUrl.startsWith("data:")
-                      ? "本地图片 (Base64)"
-                      : "网络链接"}
+                  <p className="mt-0.5 text-[10px] text-stone-400/60">
+                    {formData.coverUrl.startsWith("data:") ? "本地图片 (Base64)" : "网络链接"}
                   </p>
                 </div>
               </div>
@@ -230,15 +220,13 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
-              分类 *
-            </label>
+            <label className="mb-1.5 block text-[11px] font-medium text-stone-500">分类 *</label>
             <select
               name="category"
               value={formData.category}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
+              className="bg-elevated border-border/50 focus:border-accent/40 w-full rounded-lg border px-4 py-2.5 text-[13px] text-stone-800 transition-colors focus:outline-none"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -249,7 +237,7 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] text-stone-500 mb-1.5 font-medium">
+            <label className="mb-1.5 block text-[11px] font-medium text-stone-500">
               标签（逗号分隔）
             </label>
             <input
@@ -258,19 +246,19 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
               value={formData.tags}
               onChange={handleInputChange}
               placeholder="例如: 轻音乐, 助眠, 放松"
-              className="w-full px-4 py-2.5 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
+              className="bg-elevated border-border/50 focus:border-accent/40 w-full rounded-lg border px-4 py-2.5 text-[13px] text-stone-800 placeholder-stone-400/50 transition-colors focus:outline-none"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-[11px] text-stone-500 font-medium">
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-[11px] font-medium text-stone-500">
                 歌曲列表 ({formData.songIds.length} 首)
               </label>
               <button
                 type="button"
                 onClick={() => setShowSearch(!showSearch)}
-                className={`flex items-center gap-1 text-[11px] px-3 py-1 rounded-md transition-all font-medium ${
+                className={`flex items-center gap-1 rounded-md px-3 py-1 text-[11px] font-medium transition-all ${
                   showSearch
                     ? "bg-accent/15 text-accent"
                     : "bg-accent/10 text-accent hover:bg-accent/15"
@@ -282,17 +270,17 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
             </div>
 
             {formData.songIds.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
+              <div className="mb-3 flex flex-wrap gap-1.5">
                 {formData.songIds.map((songId) => (
                   <span
                     key={songId}
-                    className="inline-flex items-center px-2.5 py-1 bg-stone-200/50 rounded-md text-[11px] text-stone-600 font-mono"
+                    className="inline-flex items-center rounded-md bg-stone-200/50 px-2.5 py-1 font-mono text-[11px] text-stone-600"
                   >
                     ID: {songId}
                     <button
                       type="button"
                       onClick={() => handleRemoveSong(songId)}
-                      className="ml-1.5 text-stone-400 hover:text-stone-800 transition-colors"
+                      className="ml-1.5 text-stone-400 transition-colors hover:text-stone-800"
                     >
                       ×
                     </button>
@@ -303,10 +291,7 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
 
             {showSearch && (
               <div className="mt-4">
-                <SearchSongs
-                  onAddSong={handleAddSong}
-                  addedSongIds={formData.songIds}
-                />
+                <SearchSongs onAddSong={handleAddSong} addedSongIds={formData.songIds} />
               </div>
             )}
           </div>
@@ -315,19 +300,15 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-accent text-white text-[13px] font-semibold rounded-lg hover:bg-accent-dim transition-all shadow-md shadow-accent/20 disabled:opacity-50"
+              className="bg-accent hover:bg-accent-dim shadow-accent/20 rounded-lg px-6 py-2.5 text-[13px] font-semibold text-white shadow-md transition-all disabled:opacity-50"
             >
-              {saving
-                ? "保存中..."
-                : editingChannel
-                  ? "保存修改"
-                  : "创建频道"}
+              {saving ? "保存中..." : editingChannel ? "保存修改" : "创建频道"}
             </button>
             {editingChannel && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-5 py-2.5 bg-stone-200/50 text-stone-600 rounded-lg hover:bg-stone-200 hover:text-stone-800 transition-all text-[13px]"
+                className="rounded-lg bg-stone-200/50 px-5 py-2.5 text-[13px] text-stone-600 transition-all hover:bg-stone-200 hover:text-stone-800"
               >
                 取消
               </button>
@@ -337,32 +318,30 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
       </div>
 
       {/* 频道列表 */}
-      <div className="bg-surface/70 backdrop-blur-md border border-border/40 rounded-xl p-6">
-        <h2 className="text-base font-medium text-stone-800 mb-5">频道列表</h2>
+      <div className="bg-surface/70 border-border/40 rounded-xl border p-6 backdrop-blur-md">
+        <h2 className="mb-5 text-base font-medium text-stone-800">频道列表</h2>
 
         {channels.length > 0 ? (
           <div className="space-y-1">
             {channels.map((channel) => (
               <div
                 key={channel.id}
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/5 transition-colors"
+                className="hover:bg-accent/5 flex items-center justify-between rounded-lg p-3 transition-colors"
               >
                 <div className="flex items-center">
                   {channel.coverUrl ? (
                     <img
                       src={channel.coverUrl}
                       alt={channel.name}
-                      className="w-10 h-10 rounded-lg ring-1 ring-border/20"
+                      className="ring-border/20 h-10 w-10 rounded-lg ring-1"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-elevated border border-border/30 flex items-center justify-center">
+                    <div className="bg-elevated border-border/30 flex h-10 w-10 items-center justify-center rounded-lg border">
                       <Music2 size={16} className="text-stone-300" />
                     </div>
                   )}
                   <div className="ml-3">
-                    <h3 className="text-[13px] font-medium text-stone-800">
-                      {channel.name}
-                    </h3>
+                    <h3 className="text-[13px] font-medium text-stone-800">{channel.name}</h3>
                     <p className="text-[11px] text-stone-500">
                       {channel.category} · {channel.songIds.length} 首歌
                     </p>
@@ -372,14 +351,14 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEdit(channel)}
-                    className="flex items-center gap-1 px-3 py-1 text-[11px] bg-stone-200/50 text-stone-600 rounded-md hover:bg-accent/10 hover:text-accent transition-all font-medium"
+                    className="hover:bg-accent/10 hover:text-accent flex items-center gap-1 rounded-md bg-stone-200/50 px-3 py-1 text-[11px] font-medium text-stone-600 transition-all"
                   >
                     <Pencil size={11} />
                     编辑
                   </button>
                   <button
                     onClick={() => handleDelete(channel.id)}
-                    className="flex items-center gap-1 px-3 py-1 text-[11px] bg-stone-200/50 text-stone-600 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-all font-medium"
+                    className="flex items-center gap-1 rounded-md bg-stone-200/50 px-3 py-1 text-[11px] font-medium text-stone-600 transition-all hover:bg-red-500/10 hover:text-red-500"
                   >
                     <Trash2 size={11} />
                     删除
@@ -389,7 +368,7 @@ export function AdminForm({ channels, categories }: AdminFormProps) {
             ))}
           </div>
         ) : (
-          <p className="text-stone-400/60 text-[13px]">暂无频道</p>
+          <p className="text-[13px] text-stone-400/60">暂无频道</p>
         )}
       </div>
     </div>

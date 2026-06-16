@@ -27,7 +27,7 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
       {/* Hero 横幅 — 全宽通栏 */}
       <section className="relative w-full overflow-hidden">
         {/* 背景纹理层 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/8 via-background to-elevated" />
+        <div className="from-accent/8 via-background to-elevated absolute inset-0 bg-gradient-to-br" />
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -39,31 +39,31 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
 
         <div className="relative px-12 pt-14 pb-12">
           <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="bg-accent/15 flex h-7 w-7 items-center justify-center rounded-lg">
                 <Sparkles size={14} className="text-accent" />
               </div>
-              <span className="text-[11px] font-medium text-accent tracking-wide uppercase">
+              <span className="text-accent text-[11px] font-medium tracking-wide uppercase">
                 Personal Radio
               </span>
             </div>
-            <h1 className="text-4xl font-bold text-text-primary tracking-tight leading-tight">
+            <h1 className="text-text-primary text-4xl leading-tight font-bold tracking-tight">
               你的私人音乐电台
             </h1>
-            <p className="text-base text-text-secondary mt-3 leading-relaxed max-w-xl">
+            <p className="text-text-secondary mt-3 max-w-xl text-base leading-relaxed">
               策展你喜爱的频道，随时随地沉浸在专属的音乐氛围中。
             </p>
-            <div className="flex items-center gap-3 mt-6">
+            <div className="mt-6 flex items-center gap-3">
               <Link
                 href="/admin"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-[13px] font-medium rounded-lg hover:bg-accent-dim transition-colors shadow-md shadow-accent/20"
+                className="bg-accent hover:bg-accent-dim shadow-accent/20 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[13px] font-medium text-white shadow-md transition-colors"
               >
                 <Plus size={15} />
                 新建频道
               </Link>
               <Link
                 href="/radio"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-surface border border-border/60 text-text-primary text-[13px] font-medium rounded-lg hover:border-accent/30 hover:bg-accent/5 transition-all"
+                className="bg-surface border-border/60 text-text-primary hover:border-accent/30 hover:bg-accent/5 inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-[13px] font-medium transition-all"
               >
                 <Radio size={15} />
                 个性化电台
@@ -72,24 +72,22 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
           </div>
 
           {/* 装饰性统计 */}
-          <div className="flex items-center gap-8 mt-10 pt-6 border-t border-border/40">
+          <div className="border-border/40 mt-10 flex items-center gap-8 border-t pt-6">
             <div className="flex items-center gap-2.5">
               <Headphones size={16} className="text-accent/60" />
               <div>
-                <p className="text-lg font-semibold text-text-primary">
-                  {channels.length}
-                </p>
-                <p className="text-[11px] text-text-secondary/60">个频道</p>
+                <p className="text-text-primary text-lg font-semibold">{channels.length}</p>
+                <p className="text-text-secondary/60 text-[11px]">个频道</p>
               </div>
             </div>
-            <div className="w-px h-8 bg-border/40" />
+            <div className="bg-border/40 h-8 w-px" />
             <div className="flex items-center gap-2.5">
               <Radio size={16} className="text-accent/60" />
               <div>
-                <p className="text-lg font-semibold text-text-primary">
+                <p className="text-text-primary text-lg font-semibold">
                   {channels.reduce((sum, c) => sum + c.songIds.length, 0)}
                 </p>
-                <p className="text-[11px] text-text-secondary/60">首歌曲</p>
+                <p className="text-text-secondary/60 text-[11px]">首歌曲</p>
               </div>
             </div>
           </div>
@@ -99,19 +97,15 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
       {/* 频道列表 — 全宽通栏 */}
       <section className="w-full px-12 py-10">
         {/* 分类筛选 */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-text-primary tracking-tight">
-              策展频道
-            </h2>
-            <p className="text-[13px] text-text-secondary mt-0.5">
-              你的私人音乐收藏
-            </p>
+            <h2 className="text-text-primary text-xl font-semibold tracking-tight">策展频道</h2>
+            <p className="text-text-secondary mt-0.5 text-[13px]">你的私人音乐收藏</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+              className={`rounded-lg px-4 py-1.5 text-[12px] font-medium transition-all ${
                 selectedCategory === null
                   ? "bg-accent/15 text-accent"
                   : "text-text-secondary hover:text-text-primary hover:bg-accent/5"
@@ -123,7 +117,7 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                className={`rounded-lg px-4 py-1.5 text-[12px] font-medium transition-all ${
                   selectedCategory === category
                     ? "bg-accent/15 text-accent"
                     : "text-text-secondary hover:text-text-primary hover:bg-accent/5"
@@ -134,7 +128,7 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
             ))}
             <button
               onClick={() => setTagManagerOpen(true)}
-              className="ml-1 w-7 h-7 rounded-lg flex items-center justify-center text-text-secondary/40 hover:text-accent hover:bg-accent/8 transition-all"
+              className="text-text-secondary/40 hover:text-accent hover:bg-accent/8 ml-1 flex h-7 w-7 items-center justify-center rounded-lg transition-all"
               title="管理标签"
             >
               <Settings size={14} />
@@ -144,14 +138,14 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
 
         {/* 频道卡片网格 */}
         {filteredChannels.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredChannels.map((channel) => (
               <ChannelCard key={channel.id} channel={channel} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-surface border border-border/30 flex items-center justify-center mx-auto mb-4">
+          <div className="py-20 text-center">
+            <div className="bg-surface border-border/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border">
               <svg
                 width="24"
                 height="24"
@@ -167,9 +161,7 @@ export function HomeContent({ channels, categories }: HomeContentProps) {
               </svg>
             </div>
             <p className="text-text-secondary/60 text-[13px]">暂无频道</p>
-            <p className="text-text-secondary/40 text-[12px] mt-1">
-              前往管理后台创建频道
-            </p>
+            <p className="text-text-secondary/40 mt-1 text-[12px]">前往管理后台创建频道</p>
           </div>
         )}
       </section>

@@ -46,40 +46,40 @@ export function SearchSongs({ onAddSong, addedSongIds = [] }: SearchSongsProps) 
   };
 
   return (
-    <div className="bg-surface/70 backdrop-blur-md border border-border/40 rounded-xl p-5">
-      <h3 className="text-[13px] font-medium text-stone-800 mb-4">搜索歌曲</h3>
+    <div className="bg-surface/70 border-border/40 rounded-xl border p-5 backdrop-blur-md">
+      <h3 className="mb-4 text-[13px] font-medium text-stone-800">搜索歌曲</h3>
 
       {/* 搜索框 */}
-      <div className="flex gap-2 mb-4">
-        <div className="flex-1 relative">
+      <div className="mb-4 flex gap-2">
+        <div className="relative flex-1">
           <input
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="输入歌曲名、歌手名..."
-            className="w-full px-4 py-2.5 pl-10 bg-elevated border border-border/50 rounded-lg text-stone-800 placeholder-stone-400/50 focus:outline-none focus:border-accent/40 transition-colors text-[13px]"
+            className="bg-elevated border-border/50 focus:border-accent/40 w-full rounded-lg border px-4 py-2.5 pl-10 text-[13px] text-stone-800 placeholder-stone-400/50 transition-colors focus:outline-none"
           />
           <Search
             size={14}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400/60"
+            className="absolute top-1/2 left-3.5 -translate-y-1/2 text-stone-400/60"
           />
         </div>
         <button
           onClick={handleSearch}
           disabled={loading || !keyword.trim()}
-          className="px-5 py-2.5 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-[13px] font-medium"
+          className="bg-accent/10 text-accent hover:bg-accent/20 rounded-lg px-5 py-2.5 text-[13px] font-medium transition-all disabled:cursor-not-allowed disabled:opacity-30"
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : "搜索"}
         </button>
       </div>
 
       {/* 搜索结果 */}
-      <div className="max-h-96 overflow-y-auto scrollbar-hide">
+      <div className="scrollbar-hide max-h-96 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 size={16} className="text-accent animate-spin" />
-            <span className="ml-2 text-stone-500 text-[13px]">搜索中...</span>
+            <span className="ml-2 text-[13px] text-stone-500">搜索中...</span>
           </div>
         ) : results.length > 0 ? (
           <div className="space-y-0.5">
@@ -92,40 +92,48 @@ export function SearchSongs({ onAddSong, addedSongIds = [] }: SearchSongsProps) 
               return (
                 <div
                   key={song.id}
-                  className="flex items-center p-2.5 rounded-lg hover:bg-accent/5 transition-colors"
+                  className="hover:bg-accent/5 flex items-center rounded-lg p-2.5 transition-colors"
                 >
                   <img
                     src={coverUrl}
                     alt={albumName}
-                    className="w-9 h-9 rounded ring-1 ring-border/20"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "/default-cover.svg"; }}
+                    className="ring-border/20 h-9 w-9 rounded ring-1"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/default-cover.svg";
+                    }}
                   />
 
-                  <div className="flex-1 ml-3 overflow-hidden">
-                    <p className="text-[13px] text-stone-800 truncate">{song.name}</p>
-                    <p className="text-[11px] text-stone-500 truncate">
+                  <div className="ml-3 flex-1 overflow-hidden">
+                    <p className="truncate text-[13px] text-stone-800">{song.name}</p>
+                    <p className="truncate text-[11px] text-stone-500">
                       {artistNames}
                       {albumName && ` · ${albumName}`}
                     </p>
                   </div>
 
-                  <span className="text-[11px] text-stone-400/60 w-12 text-right tabular-nums font-mono">
+                  <span className="w-12 text-right font-mono text-[11px] text-stone-400/60 tabular-nums">
                     {formatDuration(song.duration || 0)}
                   </span>
 
                   <button
                     onClick={() => handleAdd(song)}
                     disabled={added}
-                    className={`ml-3 px-3 py-1 rounded-md text-[11px] transition-all font-medium ${
+                    className={`ml-3 rounded-md px-3 py-1 text-[11px] font-medium transition-all ${
                       added
-                        ? "bg-stone-200/40 text-stone-400 cursor-not-allowed"
+                        ? "cursor-not-allowed bg-stone-200/40 text-stone-400"
                         : "bg-accent/10 text-accent hover:bg-accent/20"
                     }`}
                   >
                     {added ? (
-                      <span className="flex items-center"><Check size={12} className="mr-1" />已添加</span>
+                      <span className="flex items-center">
+                        <Check size={12} className="mr-1" />
+                        已添加
+                      </span>
                     ) : (
-                      <span className="flex items-center"><Plus size={12} className="mr-1" />添加</span>
+                      <span className="flex items-center">
+                        <Plus size={12} className="mr-1" />
+                        添加
+                      </span>
                     )}
                   </button>
                 </div>
@@ -133,9 +141,9 @@ export function SearchSongs({ onAddSong, addedSongIds = [] }: SearchSongsProps) 
             })}
           </div>
         ) : searched ? (
-          <div className="text-center py-8 text-stone-400/60 text-[13px]">未找到相关歌曲</div>
+          <div className="py-8 text-center text-[13px] text-stone-400/60">未找到相关歌曲</div>
         ) : (
-          <div className="text-center py-8 text-stone-400/50 text-[13px]">输入关键词搜索歌曲</div>
+          <div className="py-8 text-center text-[13px] text-stone-400/50">输入关键词搜索歌曲</div>
         )}
       </div>
     </div>

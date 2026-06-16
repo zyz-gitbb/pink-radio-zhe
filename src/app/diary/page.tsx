@@ -129,12 +129,8 @@ export default function DiaryPage() {
     return cards.filter((card) => {
       const songName = card.songName.toLowerCase();
       const artists = card.artistName.toLowerCase();
-      const diaryText = card.entries
-        .map((e) => e.content.toLowerCase())
-        .join(" ");
-      return (
-        songName.includes(q) || artists.includes(q) || diaryText.includes(q)
-      );
+      const diaryText = card.entries.map((e) => e.content.toLowerCase()).join(" ");
+      return songName.includes(q) || artists.includes(q) || diaryText.includes(q);
     });
   }, [cards, searchQuery]);
 
@@ -164,54 +160,43 @@ export default function DiaryPage() {
   };
 
   return (
-    <div className="px-12 py-10 min-h-screen">
+    <div className="min-h-screen px-12 py-10">
       {/* 返回链接 */}
       <Link
         href="/radio"
-        className="inline-flex items-center text-[12px] text-stone-400 hover:text-stone-600 transition-colors mb-4"
+        className="mb-4 inline-flex items-center text-[12px] text-stone-400 transition-colors hover:text-stone-600"
       >
         <ArrowLeft size={14} className="mr-1" />
         返回
       </Link>
 
       {/* 标题 + 搜索栏 */}
-      <div className="flex justify-between items-end mb-10">
+      <div className="mb-10 flex items-end justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-stone-800 tracking-tight">
-              音乐手账
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-stone-800">音乐手账</h1>
             <button
               onClick={handleRepair}
               disabled={repairing}
               title="修复缺失的歌曲封面和名称"
-              className={`
-                w-6 h-6 rounded-md flex items-center justify-center
-                text-stone-300 hover:text-amber-500 hover:bg-amber-50
-                transition-all duration-300
-                ${repairing ? "animate-pulse text-amber-400" : ""}
-              `}
+              className={`flex h-6 w-6 items-center justify-center rounded-md text-stone-300 transition-all duration-300 hover:bg-amber-50 hover:text-amber-500 ${repairing ? "animate-pulse text-amber-400" : ""} `}
             >
               <Wand2 size={13} strokeWidth={1.5} />
             </button>
           </div>
-          <p className="text-[13px] text-stone-400 mt-1">
-            记录你在音乐里的每一个瞬间
-          </p>
+          <p className="mt-1 text-[13px] text-stone-400">记录你在音乐里的每一个瞬间</p>
         </div>
 
         {/* 可折叠搜索胶囊 */}
         <div
           onClick={() => inputRef.current?.focus()}
-          className={`
-            flex items-center rounded-full transition-all duration-500 ease-out overflow-hidden cursor-pointer
-            ${searchQuery
-              ? "w-64 bg-white/50 backdrop-blur-md shadow-sm ring-1 ring-rose-100/50"
-              : "w-10 bg-transparent focus-within:w-64 focus-within:bg-white/50 focus-within:backdrop-blur-md focus-within:shadow-sm focus-within:ring-1 focus-within:ring-rose-100/50"
-            }
-          `}
+          className={`flex cursor-pointer items-center overflow-hidden rounded-full transition-all duration-500 ease-out ${
+            searchQuery
+              ? "w-64 bg-white/50 shadow-sm ring-1 ring-rose-100/50 backdrop-blur-md"
+              : "w-10 bg-transparent focus-within:w-64 focus-within:bg-white/50 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-rose-100/50 focus-within:backdrop-blur-md"
+          } `}
         >
-          <div className="min-w-[40px] flex justify-center flex-shrink-0">
+          <div className="flex min-w-[40px] flex-shrink-0 justify-center">
             <Search size={15} className="text-stone-400" />
           </div>
           <input
@@ -220,11 +205,7 @@ export default function DiaryPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索歌曲或手账..."
-            className={`
-              w-full bg-transparent outline-none border-none text-sm text-stone-700 placeholder:text-stone-300 pr-4
-              transition-opacity duration-300
-              ${searchQuery ? "opacity-100" : "opacity-0 focus:opacity-100"}
-            `}
+            className={`w-full border-none bg-transparent pr-4 text-sm text-stone-700 transition-opacity duration-300 outline-none placeholder:text-stone-300 ${searchQuery ? "opacity-100" : "opacity-0 focus:opacity-100"} `}
           />
         </div>
       </div>
@@ -232,25 +213,21 @@ export default function DiaryPage() {
       {/* 加载态 */}
       {loading && (
         <div className="flex items-center justify-center py-32">
-          <Loader2 size={20} className="text-stone-300 animate-spin" />
-          <span className="ml-2 text-[13px] text-stone-400">
-            加载手账中...
-          </span>
+          <Loader2 size={20} className="animate-spin text-stone-300" />
+          <span className="ml-2 text-[13px] text-stone-400">加载手账中...</span>
         </div>
       )}
 
       {/* 空状态 */}
       {!loading && cards.length === 0 && (
         <div className="flex flex-col items-center justify-center py-32">
-          <div className="w-16 h-16 rounded-2xl bg-white/50 backdrop-blur-sm border border-stone-200/40 flex items-center justify-center mb-5">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-stone-200/40 bg-white/50 backdrop-blur-sm">
             <BookOpen size={24} className="text-stone-300" strokeWidth={1.5} />
           </div>
-          <p className="text-stone-400 text-[13px]">
-            还没有写下任何手账，去听首歌记录一下吧~
-          </p>
+          <p className="text-[13px] text-stone-400">还没有写下任何手账，去听首歌记录一下吧~</p>
           <Link
             href="/radio"
-            className="mt-4 px-5 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/15 transition-all text-[13px] font-medium"
+            className="bg-accent/10 text-accent hover:bg-accent/15 mt-4 rounded-lg px-5 py-2 text-[13px] font-medium transition-all"
           >
             去发现音乐
           </Link>
@@ -260,64 +237,56 @@ export default function DiaryPage() {
       {/* 搜索无结果 */}
       {!loading && cards.length > 0 && filteredCards.length === 0 && (
         <div className="flex flex-col items-center justify-center py-32">
-          <Search size={24} className="text-stone-300 mb-3" />
-          <p className="text-stone-400 text-[13px]">
-            没有找到「{searchQuery}」相关的手账
-          </p>
+          <Search size={24} className="mb-3 text-stone-300" />
+          <p className="text-[13px] text-stone-400">没有找到「{searchQuery}」相关的手账</p>
         </div>
       )}
 
       {/* 手账卡片网格 */}
       {!loading && filteredCards.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredCards.map((card) => (
             <div
               key={card.songId}
-              className="bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/40 overflow-hidden"
+              className="overflow-hidden rounded-2xl border border-stone-200/40 bg-white/50 backdrop-blur-sm"
             >
               {/* 卡片头部 — 可点击播放 */}
               <div
                 onClick={() => card.songId > 0 && handlePlay(card.songId)}
-                className="group flex items-center gap-3.5 px-5 pt-5 pb-4 cursor-pointer hover:bg-rose-50/40 transition-colors p-2 -m-2 rounded-xl"
+                className="group -m-2 flex cursor-pointer items-center gap-3.5 rounded-xl p-2 px-5 pt-5 pb-4 transition-colors hover:bg-rose-50/40"
               >
                 {/* 封面 + 播放遮罩 */}
-                <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-stone-200/40">
+                <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl ring-1 ring-stone-200/40">
                   <img
                     src={card.coverUrl}
                     alt={card.songName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/default-cover.svg";
                     }}
                   />
-                  <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Play size={18} fill="white" className="text-white ml-0.5" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100">
+                    <Play size={18} fill="white" className="ml-0.5 text-white" />
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-stone-800 truncate">
+                  <p className="truncate text-[13px] font-semibold text-stone-800">
                     {card.songName}
                   </p>
-                  <p className="text-[11px] text-stone-400 truncate mt-0.5">
-                    {card.artistName}
-                  </p>
-                  <p className="text-[10px] text-stone-300 mt-0.5">
-                    {card.entries.length} 条手账
-                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-stone-400">{card.artistName}</p>
+                  <p className="mt-0.5 text-[10px] text-stone-300">{card.entries.length} 条手账</p>
                 </div>
               </div>
 
               {/* 分割线 */}
-              <div className="h-px bg-stone-200/40 mx-5" />
+              <div className="mx-5 h-px bg-stone-200/40" />
 
               {/* 日记列表 */}
-              <div className="px-5 py-3.5 space-y-3 max-h-[280px] overflow-y-auto scrollbar-hide">
+              <div className="scrollbar-hide max-h-[280px] space-y-3 overflow-y-auto px-5 py-3.5">
                 {card.entries.map((entry, idx) => (
                   <div key={entry.id || idx}>
-                    <p className="text-[10px] text-stone-300 font-mono mb-1">
-                      {entry.timestamp}
-                    </p>
-                    <p className="text-[12.5px] text-stone-600 leading-relaxed whitespace-pre-wrap break-words">
+                    <p className="mb-1 font-mono text-[10px] text-stone-300">{entry.timestamp}</p>
+                    <p className="text-[12.5px] leading-relaxed break-words whitespace-pre-wrap text-stone-600">
                       {entry.content}
                     </p>
                   </div>

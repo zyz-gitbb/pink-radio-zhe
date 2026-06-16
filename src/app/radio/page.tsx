@@ -3,23 +3,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  getRecommendations,
-  getRecommendationPool,
-  getDailyRecommendSongs,
-} from "@/lib/api";
+import { getRecommendations, getRecommendationPool, getDailyRecommendSongs } from "@/lib/api";
 import { RecommendationCard } from "@/components/recommendation-card";
 import { SongList } from "@/components/song-list";
 import { usePlayer } from "@/hooks/use-player";
-import {
-  RefreshCw,
-  Sparkles,
-  Radar,
-  Music2,
-  ArrowLeft,
-  Play,
-  CalendarDays,
-} from "lucide-react";
+import { RefreshCw, Sparkles, Radar, Music2, ArrowLeft, Play, CalendarDays } from "lucide-react";
 import type { Song } from "@/types";
 
 // Fisher-Yates 洗牌算法
@@ -35,20 +23,18 @@ function shuffle<T>(arr: T[]): T[] {
 // ========== 骨架屏 ==========
 
 function BentoSkeleton({ className = "" }: { className?: string }) {
-  return (
-    <div className={`bg-elevated/60 animate-pulse rounded-3xl ${className}`} />
-  );
+  return <div className={`bg-elevated/60 animate-pulse rounded-3xl ${className}`} />;
 }
 
 function GridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="rounded-2xl overflow-hidden bg-surface/70 border border-border/40">
-          <div className="aspect-square bg-elevated animate-pulse" />
-          <div className="p-4 space-y-2">
-            <div className="h-3.5 bg-elevated rounded-md w-3/4 animate-pulse" />
-            <div className="h-2.5 bg-elevated rounded w-16 animate-pulse" />
+        <div key={i} className="bg-surface/70 border-border/40 overflow-hidden rounded-2xl border">
+          <div className="bg-elevated aspect-square animate-pulse" />
+          <div className="space-y-2 p-4">
+            <div className="bg-elevated h-3.5 w-3/4 animate-pulse rounded-md" />
+            <div className="bg-elevated h-2.5 w-16 animate-pulse rounded" />
           </div>
         </div>
       ))}
@@ -210,53 +196,45 @@ export default function RadioPage() {
   };
 
   return (
-    <div className="px-12 py-10 min-h-screen">
+    <div className="min-h-screen px-12 py-10">
       {/* ====== 页面标题 ====== */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800 tracking-tight">
-            个性化电台
-          </h1>
-          <p className="text-[13px] text-stone-500 mt-1">
-            根据你的口味推荐
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-stone-800">个性化电台</h1>
+          <p className="mt-1 text-[13px] text-stone-500">根据你的口味推荐</p>
         </div>
       </div>
 
       {/* ====== 顶部核心区：Bento Grid ====== */}
-      <div className="grid grid-cols-3 gap-4 mb-14">
+      <div className="mb-14 grid grid-cols-3 gap-4">
         {/* 每日推荐 — 宽卡片（占 2 列 + 2 行） */}
         {dailyCover ? (
           <button
             onClick={handleDailyClick}
-            className="col-span-2 row-span-2 relative rounded-3xl overflow-hidden group cursor-pointer text-left h-[340px]"
+            className="group relative col-span-2 row-span-2 h-[340px] cursor-pointer overflow-hidden rounded-3xl text-left"
           >
             <img
               src={dailyCover}
               alt="每日推荐"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-            <div className="absolute inset-0 backdrop-blur-[0px] group-hover:backdrop-blur-[2px] transition-all duration-500" />
-            <div className="absolute bottom-0 left-0 right-0 p-7">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+            <div className="absolute inset-0 backdrop-blur-[0px] transition-all duration-500 group-hover:backdrop-blur-[2px]" />
+            <div className="absolute right-0 bottom-0 left-0 p-7">
+              <div className="mb-2 flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
                   <CalendarDays size={12} className="text-white" />
                 </div>
-                <span className="text-[10px] font-medium text-white/70 tracking-widest uppercase">
+                <span className="text-[10px] font-medium tracking-widest text-white/70 uppercase">
                   Daily Mix
                 </span>
               </div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">
-                每日推荐
-              </h2>
-              <p className="text-[13px] text-white/60 mt-1">
-                根据你的听歌品味，每天更新 30 首
-              </p>
+              <h2 className="text-2xl font-bold tracking-tight text-white">每日推荐</h2>
+              <p className="mt-1 text-[13px] text-white/60">根据你的听歌品味，每天更新 30 首</p>
             </div>
             {/* 播放按钮 */}
-            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/30 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-              <Play size={20} fill="white" className="text-white ml-0.5" />
+            <div className="bg-accent shadow-accent/30 absolute top-6 right-6 flex h-12 w-12 translate-y-2 items-center justify-center rounded-full opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+              <Play size={20} fill="white" className="ml-0.5 text-white" />
             </div>
           </button>
         ) : (
@@ -267,24 +245,22 @@ export default function RadioPage() {
         {radarCover && radarId ? (
           <Link
             href={`/playlist/${radarId}`}
-            className="relative rounded-3xl overflow-hidden group cursor-pointer h-[166px]"
+            className="group relative h-[166px] cursor-pointer overflow-hidden rounded-3xl"
           >
             <img
               src={radarCover}
               alt="私人雷达"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <div className="flex items-center gap-2 mb-1.5">
+            <div className="absolute right-0 bottom-0 left-0 p-5">
+              <div className="mb-1.5 flex items-center gap-2">
                 <Radar size={13} className="text-white/80" />
-                <span className="text-[10px] font-medium text-white/60 tracking-widest uppercase">
+                <span className="text-[10px] font-medium tracking-widest text-white/60 uppercase">
                   Radar
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">
-                私人雷达
-              </h3>
+              <h3 className="text-lg font-bold tracking-tight text-white">私人雷达</h3>
             </div>
           </Link>
         ) : (
@@ -295,24 +271,22 @@ export default function RadioPage() {
         {chineseCover && chineseId ? (
           <Link
             href={`/playlist/${chineseId}`}
-            className="relative rounded-3xl overflow-hidden group cursor-pointer h-[166px]"
+            className="group relative h-[166px] cursor-pointer overflow-hidden rounded-3xl"
           >
             <img
               src={chineseCover}
               alt="华语流行日推"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <div className="flex items-center gap-2 mb-1.5">
+            <div className="absolute right-0 bottom-0 left-0 p-5">
+              <div className="mb-1.5 flex items-center gap-2">
                 <Music2 size={13} className="text-white/80" />
-                <span className="text-[10px] font-medium text-white/60 tracking-widest uppercase">
+                <span className="text-[10px] font-medium tracking-widest text-white/60 uppercase">
                   Chinese Pop
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">
-                华语流行日推
-              </h3>
+              <h3 className="text-lg font-bold tracking-tight text-white">华语流行日推</h3>
             </div>
           </Link>
         ) : (
@@ -322,11 +296,11 @@ export default function RadioPage() {
 
       {/* ====== 每日推荐歌曲展开区 ====== */}
       {showDailySongs && (
-        <div className="mb-12 bg-surface/50 backdrop-blur-sm rounded-2xl border border-border/30 p-6">
-          <div className="flex items-center gap-3 mb-5">
+        <div className="bg-surface/50 border-border/30 mb-12 rounded-2xl border p-6 backdrop-blur-sm">
+          <div className="mb-5 flex items-center gap-3">
             <button
               onClick={() => setShowDailySongs(false)}
-              className="w-7 h-7 rounded-full bg-stone-200/60 flex items-center justify-center text-stone-500 hover:text-stone-800 hover:bg-stone-200 transition-all"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-200/60 text-stone-500 transition-all hover:bg-stone-200 hover:text-stone-800"
             >
               <ArrowLeft size={14} />
             </button>
@@ -337,32 +311,28 @@ export default function RadioPage() {
           </div>
           {loadingDaily ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw size={18} className="text-stone-400 animate-spin" />
+              <RefreshCw size={18} className="animate-spin text-stone-400" />
               <span className="ml-2 text-[13px] text-stone-400">加载中…</span>
             </div>
           ) : dailySongs.length > 0 ? (
             <SongList songs={dailySongs} onPlayAll={handlePlayAllDaily} />
           ) : (
-            <p className="text-center text-[13px] text-stone-400 py-8">
-              暂无每日推荐，请先登录
-            </p>
+            <p className="py-8 text-center text-[13px] text-stone-400">暂无每日推荐，请先登录</p>
           )}
         </div>
       )}
 
       {/* ====== 区段分隔 ====== */}
-      <div className="flex items-center justify-between mb-6 mt-2">
+      <div className="mt-2 mb-6 flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-medium text-stone-400 tracking-[0.2em] uppercase">
+          <span className="text-[10px] font-medium tracking-[0.2em] text-stone-400 uppercase">
             Explore
           </span>
-          <h2 className="text-lg font-semibold text-stone-800 tracking-tight mt-0.5">
-            探索更多
-          </h2>
+          <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-stone-800">探索更多</h2>
         </div>
         <button
           onClick={refreshPlaylists}
-          className="flex items-center gap-2 px-4 py-1.5 text-[13px] text-stone-500 hover:text-stone-800 bg-accent/5 rounded-lg hover:bg-accent/10 transition-all font-medium"
+          className="bg-accent/5 hover:bg-accent/10 flex items-center gap-2 rounded-lg px-4 py-1.5 text-[13px] font-medium text-stone-500 transition-all hover:text-stone-800"
         >
           <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
           换一批
@@ -374,7 +344,7 @@ export default function RadioPage() {
         <GridSkeleton />
       ) : displayList.length > 0 ? (
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5"
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
           layout
         >
           <AnimatePresence mode="popLayout" initial={false}>
@@ -392,24 +362,18 @@ export default function RadioPage() {
                   delay: index * 0.03,
                 }}
               >
-                <RecommendationCard
-                  id={item.id}
-                  name={item.name}
-                  picUrl={item.picUrl}
-                />
+                <RecommendationCard id={item.id} name={item.name} picUrl={item.picUrl} />
               </motion.div>
             ))}
           </AnimatePresence>
         </motion.div>
       ) : (
-        <div className="text-center py-16">
-          <div className="w-14 h-14 rounded-2xl bg-elevated border border-border/30 flex items-center justify-center mx-auto mb-4">
+        <div className="py-16 text-center">
+          <div className="bg-elevated border-border/30 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border">
             <Sparkles size={22} className="text-stone-300" />
           </div>
-          <p className="text-stone-500/60 text-[13px]">暂无推荐</p>
-          <p className="text-stone-400/50 text-[12px] mt-1">
-            登录后可获取更精准的私人推荐
-          </p>
+          <p className="text-[13px] text-stone-500/60">暂无推荐</p>
+          <p className="mt-1 text-[12px] text-stone-400/50">登录后可获取更精准的私人推荐</p>
         </div>
       )}
     </div>

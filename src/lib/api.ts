@@ -16,10 +16,7 @@ export class ApiError extends Error {
 }
 
 // 通用 GET 请求（社区开源 API 使用 GET + query parameters）
-async function getRequest<T>(
-  apiPath: string,
-  params: Record<string, string> = {}
-): Promise<T> {
+async function getRequest<T>(apiPath: string, params: Record<string, string> = {}): Promise<T> {
   const searchParams = new URLSearchParams(params);
   const queryString = searchParams.toString();
   const url = `${PROXY_BASE}/${apiPath}${queryString ? `?${queryString}` : ""}`;
@@ -53,9 +50,7 @@ export async function getSongUrl(songId: number): Promise<string | null> {
 
     // 检查是否是版权限制或 VIP 歌曲
     if (!url || code === -110 || code === -200) {
-      console.warn(
-        `检测到版权限制或空链接（歌曲ID: ${songId}, 错误码: ${code}）`
-      );
+      console.warn(`检测到版权限制或空链接（歌曲ID: ${songId}, 错误码: ${code}）`);
       return null;
     }
 
@@ -159,7 +154,9 @@ export async function getPersonalized(): Promise<PersonalizedResponse> {
 }
 
 // 获取大批量推荐歌单池（用于前端洗牌）
-export async function getRecommendationPool(limit = 100): Promise<{ id: number; name: string; picUrl: string }[]> {
+export async function getRecommendationPool(
+  limit = 100
+): Promise<{ id: number; name: string; picUrl: string }[]> {
   const bust = Date.now().toString();
   const results: { id: number; name: string; picUrl: string }[] = [];
   const seen = new Set<number>();
@@ -167,13 +164,18 @@ export async function getRecommendationPool(limit = 100): Promise<{ id: number; 
   // 来源 1：/recommend/resource（私域推荐，约 10-30 条）
   try {
     const res = await fetch(`${PROXY_BASE}/recommend/resource?timestamp=${bust}`, {
-      method: "GET", headers: { "Content-Type": "application/json" }, cache: "no-store",
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
     });
     if (res.ok) {
       const data = await res.json();
       const items = data.recommend || data.result || [];
       for (const it of items) {
-        if (!seen.has(it.id)) { seen.add(it.id); results.push(it); }
+        if (!seen.has(it.id)) {
+          seen.add(it.id);
+          results.push(it);
+        }
       }
     }
   } catch {}
@@ -181,24 +183,34 @@ export async function getRecommendationPool(limit = 100): Promise<{ id: number; 
   // 来源 2：/personalized（公开推荐，约 10-30 条）
   try {
     const res = await fetch(`${PROXY_BASE}/personalized?timestamp=${bust}`, {
-      method: "GET", headers: { "Content-Type": "application/json" }, cache: "no-store",
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
     });
     if (res.ok) {
       const data = await res.json();
-      for (const it of (data.result || [])) {
-        if (!seen.has(it.id)) { seen.add(it.id); results.push(it); }
+      for (const it of data.result || []) {
+        if (!seen.has(it.id)) {
+          seen.add(it.id);
+          results.push(it);
+        }
       }
     }
   } catch {}
 
   // 来源 3：/top/playlist（热门歌单池，支持 limit）
   try {
-    const res = await fetch(`${PROXY_BASE}/top/playlist?limit=${limit}&order=hot&timestamp=${bust}`, {
-      method: "GET", headers: { "Content-Type": "application/json" }, cache: "no-store",
-    });
+    const res = await fetch(
+      `${PROXY_BASE}/top/playlist?limit=${limit}&order=hot&timestamp=${bust}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+      }
+    );
     if (res.ok) {
       const data = await res.json();
-      for (const p of (data.playlists || [])) {
+      for (const p of data.playlists || []) {
         if (!seen.has(p.id)) {
           seen.add(p.id);
           results.push({ id: p.id, name: p.name, picUrl: p.coverImgUrl || p.picUrl });
@@ -231,7 +243,9 @@ export async function getDailyRecommendSongs(): Promise<Song[]> {
 }
 
 // 获取私人推荐歌单（需登录）
-export async function getPrivateRecommend(): Promise<{ id: number; name: string; picUrl: string }[]> {
+export async function getPrivateRecommend(): Promise<
+  { id: number; name: string; picUrl: string }[]
+> {
   const bust = Date.now().toString();
   try {
     const res = await fetch(`${PROXY_BASE}/personalized/privatecontent?timestamp=${bust}`, {
@@ -256,11 +270,14 @@ export async function getTopPlaylistByCategory(
 ): Promise<{ id: number; name: string; picUrl: string; description?: string }[]> {
   const bust = Date.now().toString();
   try {
-    const res = await fetch(`${PROXY_BASE}/top/playlist?cat=${encodeURIComponent(cat)}&limit=${limit}&timestamp=${bust}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `${PROXY_BASE}/top/playlist?cat=${encodeURIComponent(cat)}&limit=${limit}&timestamp=${bust}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+      }
+    );
     if (res.ok) {
       const data = await res.json();
       return (data.playlists || []).map((p: any) => ({
@@ -380,9 +397,7 @@ export async function createLoginQr(key: string): Promise<string | null> {
 }
 
 // 检查二维码扫码状态
-export async function checkLoginQrStatus(
-  key: string
-): Promise<{ code: number; message?: string }> {
+export async function checkLoginQrStatus(key: string): Promise<{ code: number; message?: string }> {
   try {
     const response = await getRequest<any>("login/qr/check", {
       key,

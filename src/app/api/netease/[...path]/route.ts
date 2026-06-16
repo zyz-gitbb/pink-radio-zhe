@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const NETEASE_API_BASE = process.env.NETEASE_API_BASE_URL;
 
-async function proxyRequest(
-  request: NextRequest,
-  path: string[]
-): Promise<NextResponse> {
+async function proxyRequest(request: NextRequest, path: string[]): Promise<NextResponse> {
   if (!NETEASE_API_BASE) {
     return NextResponse.json(
       { code: 500, message: "API 配置错误", retryable: false },
@@ -25,8 +22,7 @@ async function proxyRequest(
 
     // 构建请求头 - 透传 cookie 和其他必要头
     const headers: Record<string, string> = {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     };
 
     // 透传前端的 cookie（用于登录状态）

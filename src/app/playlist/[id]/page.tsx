@@ -49,20 +49,20 @@ export default function PlaylistPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <Loader2 size={24} className="text-accent animate-spin" />
-        <span className="ml-3 text-stone-500 text-[13px]">加载歌单中...</span>
+        <span className="ml-3 text-[13px] text-stone-500">加载歌单中...</span>
       </div>
     );
   }
 
   if (error && !playlistInfo) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-stone-500/60 text-[13px] mb-4">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <p className="mb-4 text-[13px] text-stone-500/60">{error}</p>
         <Link
           href="/radio"
-          className="px-4 py-1.5 bg-accent/10 text-accent rounded-lg hover:bg-accent/15 transition-all text-[13px] font-medium"
+          className="bg-accent/10 text-accent hover:bg-accent/15 rounded-lg px-4 py-1.5 text-[13px] font-medium transition-all"
         >
           返回推荐
         </Link>
@@ -76,38 +76,34 @@ export default function PlaylistPage() {
   return (
     <div>
       {/* 歌单头部 */}
-      <div className="relative h-72 overflow-hidden bg-surface">
+      <div className="bg-surface relative h-72 overflow-hidden">
         <img
           src={coverUrl}
           alt={playlistInfo?.name || "歌单封面"}
-          className="w-full h-full object-cover opacity-30"
+          className="h-full w-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-12 pb-8">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="from-background via-background/70 absolute inset-0 bg-gradient-to-t to-transparent" />
+        <div className="absolute right-0 bottom-0 left-0 px-12 pb-8">
+          <div className="mb-3 flex items-center gap-2">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-sm text-stone-400 hover:text-stone-700 transition-colors group"
+              className="group flex items-center gap-2 text-sm text-stone-400 transition-colors hover:text-stone-700"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               <span>返回</span>
             </button>
           </div>
-          <h1 className="text-3xl font-bold text-stone-800 mb-2 tracking-tight">
+          <h1 className="mb-2 text-3xl font-bold tracking-tight text-stone-800">
             {playlistInfo?.name || "歌单详情"}
           </h1>
           {playlistInfo?.description && (
-            <p className="text-stone-500 text-[13px] mb-3 line-clamp-2 max-w-2xl">
+            <p className="mb-3 line-clamp-2 max-w-2xl text-[13px] text-stone-500">
               {playlistInfo.description}
             </p>
           )}
           <div className="flex items-center gap-4 text-[11px] text-stone-400">
-            {playlistInfo?.creator?.nickname && (
-              <span>{playlistInfo.creator.nickname}</span>
-            )}
-            {playCount > 0 && (
-              <span>{playCount.toLocaleString()} 次播放</span>
-            )}
+            {playlistInfo?.creator?.nickname && <span>{playlistInfo.creator.nickname}</span>}
+            {playCount > 0 && <span>{playCount.toLocaleString()} 次播放</span>}
             <span>{songs.length} 首歌曲</span>
           </div>
         </div>
@@ -118,8 +114,8 @@ export default function PlaylistPage() {
         {songs.length > 0 ? (
           <SongList songs={songs} />
         ) : (
-          <div className="text-center py-20">
-            <p className="text-stone-400/60 text-[13px]">{error || "歌单内暂无歌曲"}</p>
+          <div className="py-20 text-center">
+            <p className="text-[13px] text-stone-400/60">{error || "歌单内暂无歌曲"}</p>
           </div>
         )}
       </div>

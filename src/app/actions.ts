@@ -58,9 +58,7 @@ export async function getChannelById(id: string): Promise<Channel | null> {
  * 插入或更新频道（upsert）
  * 自动将 tags 数组序列化为 JSON 字符串
  */
-export async function saveChannel(
-  channelData: Omit<Channel, "songIds">
-): Promise<void> {
+export async function saveChannel(channelData: Omit<Channel, "songIds">): Promise<void> {
   const now = new Date();
 
   await db
@@ -110,11 +108,7 @@ const DEFAULT_CATEGORIES = ["深夜放松", "工作专注", "运动节拍", "学
  * 获取所有分类（若表为空则自动写入默认分类）
  */
 export async function getCategories(): Promise<string[]> {
-  const rows = await db
-    .select()
-    .from(categories)
-    .orderBy(categories.sortOrder)
-    .all();
+  const rows = await db.select().from(categories).orderBy(categories.sortOrder).all();
 
   if (rows.length === 0) {
     // 首次访问：写入默认分类
@@ -134,10 +128,7 @@ export async function getCategories(): Promise<string[]> {
  * 新增分类
  */
 export async function addCategory(name: string): Promise<string[]> {
-  const existing = await db
-    .select()
-    .from(categories)
-    .all();
+  const existing = await db.select().from(categories).all();
 
   if (!existing.some((c) => c.name === name)) {
     const maxOrder = existing.reduce((max, c) => Math.max(max, c.sortOrder ?? 0), 0);
@@ -151,14 +142,8 @@ export async function addCategory(name: string): Promise<string[]> {
 /**
  * 重命名分类（同步更新引用该分类的频道）
  */
-export async function renameCategory(
-  oldName: string,
-  newName: string
-): Promise<string[]> {
-  await db
-    .update(categories)
-    .set({ name: newName })
-    .where(eq(categories.name, oldName));
+export async function renameCategory(oldName: string, newName: string): Promise<string[]> {
+  await db.update(categories).set({ name: newName }).where(eq(categories.name, oldName));
 
   // 同步更新所有使用旧分类名的频道
   const affectedChannels = await db
@@ -191,9 +176,7 @@ export async function deleteCategory(name: string): Promise<string[]> {
 /**
  * 获取指定分类下的频道数量（用于删除前检查）
  */
-export async function getChannelCountByCategory(
-  categoryName: string
-): Promise<number> {
+export async function getChannelCountByCategory(categoryName: string): Promise<number> {
   const rows = await db
     .select({ id: channels.id })
     .from(channels)
@@ -234,12 +217,7 @@ export async function addSongToChannel(
   const duplicate = await db
     .select({ id: channelSongs.id })
     .from(channelSongs)
-    .where(
-      and(
-        eq(channelSongs.channelId, channelId),
-        eq(channelSongs.songId, song.id)
-      )
-    )
+    .where(and(eq(channelSongs.channelId, channelId), eq(channelSongs.songId, song.id)))
     .get();
 
   if (duplicate) {
@@ -264,18 +242,10 @@ export async function addSongToChannel(
 /**
  * 从频道中移除歌曲
  */
-export async function removeSongFromChannel(
-  channelId: string,
-  songId: number
-): Promise<boolean> {
+export async function removeSongFromChannel(channelId: string, songId: number): Promise<boolean> {
   await db
     .delete(channelSongs)
-    .where(
-      and(
-        eq(channelSongs.channelId, channelId),
-        eq(channelSongs.songId, songId)
-      )
-    );
+    .where(and(eq(channelSongs.channelId, channelId), eq(channelSongs.songId, songId)));
 
   revalidatePath(`/channel/${channelId}`);
   return true;
@@ -297,11 +267,7 @@ export interface DiaryData {
  * 获取所有手账记录，按时间由新到旧排序
  */
 export async function getDiaries(): Promise<DiaryData[]> {
-  const rows = await db
-    .select()
-    .from(diaries)
-    .orderBy(desc(diaries.createdAt))
-    .all();
+  const rows = await db.select().from(diaries).orderBy(desc(diaries.createdAt)).all();
 
   return rows.map((row) => ({
     id: row.id,
@@ -375,12 +341,7 @@ export async function repairDiaryMetadata(): Promise<{
     if (!row.songId) return false;
     const name = row.songName ?? "";
     const cover = row.coverUrl ?? "";
-    return (
-      name === "" ||
-      name.includes("未知") ||
-      cover === "" ||
-      cover === "/default-cover.svg"
-    );
+    return name === "" || name.includes("未知") || cover === "" || cover === "/default-cover.svg";
   });
 
   console.log(`[repairDiaryMetadata] 需要修复 ${needsRepair.length} 条`);
@@ -411,15 +372,16 @@ export async function repairDiaryMetadata(): Promise<{
 
         for (const s of songs) {
           const artistName =
-            (s.ar || s.artists || []).map((a: any) => a.name).join(", ") ||
-            "未知艺术家";
+            (s.ar || s.artists || []).map((a: any) => a.name).join(", ") || "未知艺术家";
           const coverUrl = s.al?.picUrl || s.album?.picUrl || "";
           songMap.set(s.id, {
             name: s.name || "未知歌曲",
             artistName,
             coverUrl,
           });
-          console.log(`[repairDiaryMetadata] 歌曲 ${s.id}: name="${s.name}", artist="${artistName}", cover="${coverUrl.slice(0, 60)}..."`);
+          console.log(
+            `[repairDiaryMetadata] 歌曲 ${s.id}: name="${s.name}", artist="${artistName}", cover="${coverUrl.slice(0, 60)}..."`
+          );
         }
       } else {
         console.error(`[repairDiaryMetadata] API 响应异常: ${res.status}`);
@@ -436,7 +398,9 @@ export async function repairDiaryMetadata(): Promise<{
   for (const row of needsRepair) {
     const info = songMap.get(row.songId!);
     if (info) {
-      console.log(`[repairDiaryMetadata] 更新手账 ${row.id}: songName="${info.name}", artist="${info.artistName}", cover="${info.coverUrl.slice(0, 60)}..."`);
+      console.log(
+        `[repairDiaryMetadata] 更新手账 ${row.id}: songName="${info.name}", artist="${info.artistName}", cover="${info.coverUrl.slice(0, 60)}..."`
+      );
       await db
         .update(diaries)
         .set({

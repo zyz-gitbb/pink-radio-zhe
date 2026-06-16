@@ -61,7 +61,7 @@ function CoverCard3D({ src, alt }: { src: string; alt: string }) {
     <div style={{ perspective: 1200 }}>
       <motion.div
         ref={ref}
-        className="relative w-64 h-64 rounded-2xl overflow-hidden cursor-pointer"
+        className="relative h-64 w-64 cursor-pointer overflow-hidden rounded-2xl"
         style={{
           transformStyle: "preserve-3d",
           rotateX,
@@ -80,12 +80,14 @@ function CoverCard3D({ src, alt }: { src: string; alt: string }) {
         <img
           src={src}
           alt={alt}
-          className="w-64 h-64 rounded-2xl object-cover ring-1 ring-black/5"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.svg'; }}
+          className="h-64 w-64 rounded-2xl object-cover ring-1 ring-black/5"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/default-cover.svg";
+          }}
         />
         {/* 动态光斑层 */}
         <motion.div
-          className="absolute inset-0 pointer-events-none rounded-2xl"
+          className="pointer-events-none absolute inset-0 rounded-2xl"
           style={{
             background:
               "radial-gradient(ellipse_at_center, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)",
@@ -155,11 +157,13 @@ export function Player() {
   const safePause = () => {
     if (!audioRef.current) return;
     if (playPromiseRef.current) {
-      playPromiseRef.current.then(() => {
-        if (audioRef.current && !audioRef.current.paused) {
-          audioRef.current.pause();
-        }
-      }).catch(() => {});
+      playPromiseRef.current
+        .then(() => {
+          if (audioRef.current && !audioRef.current.paused) {
+            audioRef.current.pause();
+          }
+        })
+        .catch(() => {});
     } else {
       audioRef.current.pause();
     }
@@ -225,7 +229,9 @@ export function Player() {
     }
   };
 
-  const handleProgressMouseDown = () => { isDragging.current = true; };
+  const handleProgressMouseDown = () => {
+    isDragging.current = true;
+  };
 
   const handleProgressMouseUp = (e: MouseEvent) => {
     if (isDragging.current && progressRef.current && audioRef.current) {
@@ -262,8 +268,10 @@ export function Player() {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        queueRef.current && !queueRef.current.contains(target) &&
-        queueBtnRef.current && !queueBtnRef.current.contains(target)
+        queueRef.current &&
+        !queueRef.current.contains(target) &&
+        queueBtnRef.current &&
+        !queueBtnRef.current.contains(target)
       ) {
         setIsQueueOpen(false);
       }
@@ -273,8 +281,13 @@ export function Player() {
   }, [isQueueOpen]);
 
   const progressPercentage = duration > 0 ? (progress / duration) * 100 : 0;
-  const coverUrl = currentSong?.al?.picUrl || currentSong?.album?.picUrl || currentSong?.coverUrl || '/default-cover.svg';
-  const artistName = (currentSong?.ar || currentSong?.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
+  const coverUrl =
+    currentSong?.al?.picUrl ||
+    currentSong?.album?.picUrl ||
+    currentSong?.coverUrl ||
+    "/default-cover.svg";
+  const artistName =
+    (currentSong?.ar || currentSong?.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
 
   return (
     <>
@@ -300,18 +313,18 @@ export function Player() {
 
             {/* 内容区 — 评论打开时退让 */}
             <motion.div
-              className="relative z-10 flex items-start gap-16 px-12 max-w-6xl w-full"
+              className="relative z-10 flex w-full max-w-6xl items-start gap-16 px-12"
               animate={{
                 x: isCommentOpen ? "-5%" : 0,
                 scale: isCommentOpen ? 0.98 : 1,
               }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
-              <div className="flex-shrink-0 flex flex-col items-center">
+              <div className="flex flex-shrink-0 flex-col items-center">
                 {currentSong ? (
                   <CoverCard3D src={coverUrl} alt={currentSong.name} />
                 ) : (
-                  <div className="w-64 h-64 rounded-2xl bg-elevated border border-border/30 flex items-center justify-center">
+                  <div className="bg-elevated border-border/30 flex h-64 w-64 items-center justify-center rounded-2xl border">
                     <Play size={40} className="text-warm-muted/20" />
                   </div>
                 )}
@@ -323,7 +336,7 @@ export function Player() {
                   songCoverUrl={coverUrl}
                 />
               </div>
-              <div className="flex-1 max-w-lg h-[28rem]">
+              <div className="h-[28rem] max-w-lg flex-1">
                 <Lyrics song={currentSong} currentTime={progress} onSeek={seek} />
               </div>
             </motion.div>
@@ -332,7 +345,7 @@ export function Player() {
             <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
               <button
                 onClick={() => setIsCommentOpen(!isCommentOpen)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
                   isCommentOpen
                     ? "bg-accent/15 text-accent"
                     : "bg-accent/10 text-text-secondary hover:text-text-primary hover:bg-accent/15"
@@ -342,8 +355,11 @@ export function Player() {
                 <MessageSquare size={17} />
               </button>
               <button
-                onClick={() => { setShowLyrics(false); setIsCommentOpen(false); }}
-                className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-accent/15 transition-all"
+                onClick={() => {
+                  setShowLyrics(false);
+                  setIsCommentOpen(false);
+                }}
+                className="bg-accent/10 text-text-secondary hover:text-text-primary hover:bg-accent/15 flex h-10 w-10 items-center justify-center rounded-full transition-all"
               >
                 <X size={18} />
               </button>
@@ -366,7 +382,7 @@ export function Player() {
           <motion.div
             ref={queueRef}
             key="queue-panel"
-            className="fixed right-4 bottom-24 z-50 w-80 max-h-[60vh] flex flex-col bg-white/70 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden border border-white/50"
+            className="fixed right-4 bottom-24 z-50 flex max-h-[60vh] w-80 flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/70 shadow-2xl backdrop-blur-xl"
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -375,34 +391,31 @@ export function Player() {
             {/* 头部 */}
             <div className="px-4 pt-4 pb-2">
               <h3 className="text-sm font-semibold text-stone-800">当前播放</h3>
-              <p className="text-[11px] text-stone-400 mt-0.5">
-                {playlist.length} 首歌曲
-              </p>
+              <p className="mt-0.5 text-[11px] text-stone-400">{playlist.length} 首歌曲</p>
             </div>
 
             {/* 列表 */}
-            <div className="overflow-y-auto scrollbar-hide flex-1 p-2">
+            <div className="scrollbar-hide flex-1 overflow-y-auto p-2">
               {playlist.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-stone-300">
                   <ListMusic size={32} strokeWidth={1} />
-                  <p className="text-xs mt-2">队列为空</p>
+                  <p className="mt-2 text-xs">队列为空</p>
                 </div>
               ) : (
                 playlist.map((track, index) => {
                   const isCurrent = index === currentIndex;
-                  const artists = (track.ar || track.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
+                  const artists =
+                    (track.ar || track.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
                   return (
                     <div
                       key={`${track.id}-${index}`}
                       onClick={() => playSong(track)}
-                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
-                        isCurrent
-                          ? "bg-rose-50/60"
-                          : "hover:bg-black/[0.03]"
+                      className={`group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${
+                        isCurrent ? "bg-rose-50/60" : "hover:bg-black/[0.03]"
                       }`}
                     >
                       {/* 当前播放指示器 */}
-                      <div className="w-4 flex-shrink-0 flex items-center justify-center">
+                      <div className="flex w-4 flex-shrink-0 items-center justify-center">
                         {isCurrent ? (
                           <AudioLines size={14} className="text-accent animate-pulse" />
                         ) : (
@@ -413,18 +426,18 @@ export function Player() {
                       </div>
 
                       {/* 歌曲信息 */}
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-[13px] truncate ${isCurrent ? "font-semibold text-stone-800" : "text-stone-600"}`}>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`truncate text-[13px] ${isCurrent ? "font-semibold text-stone-800" : "text-stone-600"}`}
+                        >
                           {track.name || "未知歌曲"}
                         </p>
-                        <p className="text-[11px] text-stone-400 truncate">
-                          {artists}
-                        </p>
+                        <p className="truncate text-[11px] text-stone-400">{artists}</p>
                       </div>
 
                       {/* 时长 + 操作按钮 */}
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <span className="text-[10px] text-stone-300 tabular-nums font-mono group-hover:hidden">
+                      <div className="flex flex-shrink-0 items-center gap-1">
+                        <span className="font-mono text-[10px] text-stone-300 tabular-nums group-hover:hidden">
                           {formatTime(track.duration)}
                         </span>
                         <button
@@ -432,7 +445,7 @@ export function Player() {
                             e.stopPropagation();
                             playNext(track);
                           }}
-                          className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-6 h-6 rounded-md text-stone-400 hover:text-accent hover:bg-accent/10 transition-all duration-200 cursor-pointer"
+                          className="hover:text-accent hover:bg-accent/10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-stone-400 opacity-0 transition-all duration-200 group-hover:opacity-100"
                           title="下一首播放"
                         >
                           <ListPlus size={13} />
@@ -442,7 +455,7 @@ export function Player() {
                             e.stopPropagation();
                             removeSong(index);
                           }}
-                          className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-6 h-6 rounded-md text-stone-400 hover:text-accent hover:bg-accent/10 transition-all duration-200 cursor-pointer"
+                          className="hover:text-accent hover:bg-accent/10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-stone-400 opacity-0 transition-all duration-200 group-hover:opacity-100"
                           title="移出队列"
                         >
                           <X size={13} strokeWidth={2} />
@@ -458,42 +471,45 @@ export function Player() {
       </AnimatePresence>
 
       {/* 播放器栏 — 全宽通栏吸底 */}
-      <div className="fixed bottom-0 left-0 right-0 w-full h-[72px] bg-surface/80 backdrop-blur-xl border-t border-border/60 z-50 shadow-[0_-4px_30px_rgba(0,0,0,0.06)]">
+      <div className="bg-surface/80 border-border/60 fixed right-0 bottom-0 left-0 z-50 h-[72px] w-full border-t shadow-[0_-4px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl">
         {/* 进度条 - 顶部 */}
         <div
           ref={progressRef}
-          className="absolute top-0 left-0 right-0 h-[3px] bg-accent/[0.08] cursor-pointer group"
+          className="bg-accent/[0.08] group absolute top-0 right-0 left-0 h-[3px] cursor-pointer"
           onClick={handleProgressClick}
           onMouseDown={handleProgressMouseDown}
         >
           <div
-            className="h-full bg-accent rounded-r-full transition-none"
+            className="bg-accent h-full rounded-r-full transition-none"
             style={{ width: `${progressPercentage}%` }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_8px_rgba(212,133,138,0.4)]"
+            className="bg-accent absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full opacity-0 shadow-[0_0_8px_rgba(212,133,138,0.4)] transition-opacity group-hover:opacity-100"
             style={{ left: `calc(${progressPercentage}% - 6px)` }}
           />
         </div>
 
-        <div className="flex items-center h-full px-8">
+        <div className="flex h-full items-center px-8">
           {/* 左侧：歌曲信息 */}
-          <div className="flex items-center w-64 min-w-0">
+          <div className="flex w-64 min-w-0 items-center">
             {currentSong ? (
               <>
                 <img
                   src={coverUrl}
-                  alt={currentSong.al?.name || currentSong.album?.name || '未知专辑'}
-                  className="w-11 h-11 rounded-lg cursor-pointer hover:opacity-80 transition-opacity ring-1 ring-border/40"
+                  alt={currentSong.al?.name || currentSong.album?.name || "未知专辑"}
+                  className="ring-border/40 h-11 w-11 cursor-pointer rounded-lg ring-1 transition-opacity hover:opacity-80"
                   onClick={() => setShowLyrics(!showLyrics)}
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.svg'; }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/default-cover.svg";
+                  }}
                 />
                 <div className="ml-3 overflow-hidden">
-                  <p className="text-[13px] font-medium truncate text-text-primary">
-                    {currentSong.name || '未知歌曲'}
+                  <p className="text-text-primary truncate text-[13px] font-medium">
+                    {currentSong.name || "未知歌曲"}
                   </p>
-                  <p className="text-[11px] text-text-secondary truncate">
-                    {(currentSong.ar || currentSong.artists || []).map((a) => a.name).join(", ") || '未知艺术家'}
+                  <p className="text-text-secondary truncate text-[11px]">
+                    {(currentSong.ar || currentSong.artists || []).map((a) => a.name).join(", ") ||
+                      "未知艺术家"}
                   </p>
                 </div>
               </>
@@ -503,7 +519,7 @@ export function Player() {
           </div>
 
           {/* 中间：播放控制 */}
-          <div className="flex-1 flex flex-col items-center max-w-2xl mx-auto">
+          <div className="mx-auto flex max-w-2xl flex-1 flex-col items-center">
             <div className="flex items-center gap-6">
               <button
                 onClick={prev}
@@ -514,7 +530,7 @@ export function Player() {
 
               <button
                 onClick={togglePlay}
-                className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white hover:bg-accent-dim hover:scale-105 transition-all shadow-md shadow-accent/25"
+                className="bg-accent hover:bg-accent-dim shadow-accent/25 flex h-9 w-9 items-center justify-center rounded-full text-white shadow-md transition-all hover:scale-105"
               >
                 {isPlaying ? (
                   <Pause size={16} fill="currentColor" />
@@ -532,19 +548,19 @@ export function Player() {
             </div>
 
             {/* 时间显示 */}
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-[10px] text-text-secondary/60 tabular-nums w-10 text-right font-mono">
+            <div className="mt-1 flex items-center gap-3">
+              <span className="text-text-secondary/60 w-10 text-right font-mono text-[10px] tabular-nums">
                 {formatTime(progress * 1000)}
               </span>
-              <span className="text-[10px] text-text-secondary/30">/</span>
-              <span className="text-[10px] text-text-secondary/60 tabular-nums w-10 font-mono">
+              <span className="text-text-secondary/30 text-[10px]">/</span>
+              <span className="text-text-secondary/60 w-10 font-mono text-[10px] tabular-nums">
                 {formatTime(duration * 1000)}
               </span>
             </div>
           </div>
 
           {/* 右侧：音量 + 模式 */}
-          <div className="flex items-center gap-4 w-64 justify-end">
+          <div className="flex w-64 items-center justify-end gap-4">
             <button
               onClick={handlePlayModeToggle}
               className={`transition-colors ${playMode === "random" ? "text-accent" : "text-text-secondary/40 hover:text-text-secondary"}`}
@@ -628,7 +644,7 @@ export function Player() {
                 max="100"
                 value={volume}
                 onChange={(e) => setVolume(parseInt(e.target.value, 10))}
-                className="w-20 h-[3px] bg-border/60 rounded-lg appearance-none cursor-pointer accent-accent"
+                className="bg-border/60 accent-accent h-[3px] w-20 cursor-pointer appearance-none rounded-lg"
               />
             </div>
           </div>

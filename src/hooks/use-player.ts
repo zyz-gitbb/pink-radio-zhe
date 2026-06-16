@@ -39,16 +39,11 @@ export function usePlayer() {
     play: () => dispatch({ type: "PLAY" }),
     next: () => dispatch({ type: "NEXT" }),
     prev: () => dispatch({ type: "PREV" }),
-    setVolume: (volume: number) =>
-      dispatch({ type: "SET_VOLUME", volume }),
-    setProgress: (progress: number) =>
-      dispatch({ type: "SET_PROGRESS", progress }),
-    setDuration: (duration: number) =>
-      dispatch({ type: "SET_DURATION", duration }),
-    setPlayMode: (mode: PlayMode) =>
-      dispatch({ type: "SET_PLAY_MODE", mode }),
-    removeSong: (index: number) =>
-      dispatch({ type: "REMOVE_SONG", index }),
+    setVolume: (volume: number) => dispatch({ type: "SET_VOLUME", volume }),
+    setProgress: (progress: number) => dispatch({ type: "SET_PROGRESS", progress }),
+    setDuration: (duration: number) => dispatch({ type: "SET_DURATION", duration }),
+    setPlayMode: (mode: PlayMode) => dispatch({ type: "SET_PLAY_MODE", mode }),
+    removeSong: (index: number) => dispatch({ type: "REMOVE_SONG", index }),
     seek: (time: number) => {
       if (audioRef.current) {
         audioRef.current.currentTime = time;
