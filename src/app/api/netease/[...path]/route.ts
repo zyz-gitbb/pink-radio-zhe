@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const NETEASE_API_BASE = process.env.NETEASE_API_BASE_URL;
+const NETEASE_API_BASE = "http://localhost:4000";
 
 async function proxyRequest(request: NextRequest, path: string[]): Promise<NextResponse> {
   if (!NETEASE_API_BASE) {
