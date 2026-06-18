@@ -62,7 +62,7 @@ export async function getSongUrl(songId: number): Promise<string | null> {
 }
 
 // 规范化歌曲数据（兼容 dt / duration / time 字段）
-function normalizeSong(s: any): Song {
+export function normalizeSong(s: any): Song {
   return {
     ...s,
     duration: s.duration || s.dt || s.time || 0,

@@ -169,9 +169,20 @@ export function Player() {
     }
   };
 
+  const isPlayingRef = useRef(isPlaying);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
   useEffect(() => {
     if (currentSong && currentSong.id !== currentSongIdRef.current) {
       currentSongIdRef.current = currentSong.id;
+      
+      // 捕获歌曲切换（或页面初次加载水合）瞬间的进度
+      // 避免因为音频加载过程中的 onTimeUpdate 把 progress 错误重置为 0
+      const targetProgress = progress;
+
       const loadAndPlay = async () => {
         try {
           const url = await getSongUrl(currentSong.id);
@@ -185,7 +196,17 @@ export function Player() {
             audioRef.current.load();
             const handleCanPlay = () => {
               audioRef.current?.removeEventListener("canplay", handleCanPlay);
-              safePlay();
+              
+              // 恢复进度
+              if (targetProgress > 0) {
+                audioRef.current!.currentTime = targetProgress;
+                setProgress(targetProgress);
+              }
+
+              // 尊重当前的播放状态
+              if (isPlayingRef.current) {
+                safePlay();
+              }
             };
             audioRef.current.addEventListener("canplay", handleCanPlay);
           }
@@ -195,6 +216,7 @@ export function Player() {
       };
       loadAndPlay();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSong?.id, audioRef]);
 
   useEffect(() => {
@@ -249,6 +271,59 @@ export function Player() {
     return () => document.removeEventListener("mouseup", handleProgressMouseUp);
   }, []);
 
+  // ========== Media Session API (系统/键盘媒体控制) ==========
+  useEffect(() => {
+    if ("mediaSession" in navigator && currentSong) {
+      const cover =
+        currentSong?.al?.picUrl ||
+        currentSong?.album?.picUrl ||
+        currentSong?.coverUrl ||
+        ""; 
+      const artistName =
+        (currentSong?.ar || currentSong?.artists || []).map((a) => a.name).join(", ") || "未知艺术家";
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.name || "未知歌曲",
+        artist: artistName,
+        album: currentSong.al?.name || currentSong.album?.name || "未知专辑",
+        artwork: cover ? [{ src: cover, sizes: "512x512", type: "image/jpeg" }] : [],
+      });
+    }
+  }, [currentSong]);
+
+  useEffect(() => {
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (!isPlaying) togglePlay();
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        if (isPlaying) togglePlay();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        prev();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        next();
+      });
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (audioRef.current && details.seekTime !== undefined) {
+          audioRef.current.currentTime = details.seekTime;
+          setProgress(details.seekTime);
+        }
+      });
+    }
+
+    return () => {
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+        navigator.mediaSession.setActionHandler("previoustrack", null);
+        navigator.mediaSession.setActionHandler("nexttrack", null);
+        navigator.mediaSession.setActionHandler("seekto", null);
+      }
+    };
+  }, [isPlaying, togglePlay, prev, next, setProgress, audioRef]);
+
   const handleMuteToggle = () => {
     if (volume > 0) {
       previousVolume.current = volume;
@@ -261,6 +336,61 @@ export function Player() {
   const handlePlayModeToggle = () => {
     setPlayMode(playMode === "sequential" ? "random" : "sequential");
   };
+
+  // ========== 全局快捷键 (Web Hotkeys) ==========
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 忽略输入框内的按键，避免冲突
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable) {
+        return;
+      }
+
+      switch (e.key) {
+        case ' ': // 空格键
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'n':
+        case 'N': // 下一首
+          e.preventDefault();
+          next();
+          break;
+        case 'm':
+        case 'M': // 静音/恢复
+          e.preventDefault();
+          handleMuteToggle();
+          break;
+        case 'ArrowUp': // 音量加
+          e.preventDefault();
+          setVolume(Math.min(100, volume + 5));
+          break;
+        case 'ArrowDown': // 音量减
+          e.preventDefault();
+          setVolume(Math.max(0, volume - 5));
+          break;
+        case 'ArrowRight': // 快进 10 秒
+          if (audioRef.current) {
+            e.preventDefault();
+            const newTime = Math.min(duration, audioRef.current.currentTime + 10);
+            audioRef.current.currentTime = newTime;
+            setProgress(newTime);
+          }
+          break;
+        case 'ArrowLeft': // 快退 10 秒
+          if (audioRef.current) {
+            e.preventDefault();
+            const newTime = Math.max(0, audioRef.current.currentTime - 10);
+            audioRef.current.currentTime = newTime;
+            setProgress(newTime);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePlay, next, handleMuteToggle, volume, setVolume, duration, setProgress, audioRef]);
 
   // 点击外部关闭播放队列
   useEffect(() => {

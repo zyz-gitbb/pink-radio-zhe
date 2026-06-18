@@ -94,7 +94,8 @@ export type PlayerAction =
   | { type: "SET_DURATION"; duration: number }
   | { type: "SET_PLAY_MODE"; mode: PlayMode }
   | { type: "REMOVE_SONG"; index: number }
-  | { type: "PLAY_NEXT"; song: Song };
+  | { type: "PLAY_NEXT"; song: Song }
+  | { type: "HYDRATE_STATE"; state: Partial<PlayerState> };
 
 // API 相关类型
 export interface NetEaseResponse<T> {

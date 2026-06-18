@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import useSWR from "swr";
 import { X, Heart, MessageSquare } from "lucide-react";
 import { getSongComments, type SongComment } from "@/lib/api";
 
@@ -73,31 +73,14 @@ function CommentSkeleton() {
 }
 
 export function CommentDrawer({ open, onClose, songId, songName }: CommentDrawerProps) {
-  const [hotComments, setHotComments] = useState<SongComment[]>([]);
-  const [comments, setComments] = useState<SongComment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data, isLoading: loading } = useSWR(
+    open && songId ? `comments-${songId}` : null,
+    () => getSongComments(songId!),
+    { revalidateOnFocus: true }
+  );
 
-  useEffect(() => {
-    if (!open || !songId) {
-      setHotComments([]);
-      setComments([]);
-      return;
-    }
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      const data = await getSongComments(songId);
-      if (!cancelled) {
-        setHotComments(data.hotComments);
-        setComments(data.comments);
-        setLoading(false);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, songId]);
+  const hotComments = data?.hotComments || [];
+  const comments = data?.comments || [];
 
   return (
     <AnimatePresence>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
+import useSWR from "swr";
 import { getSongLyric } from "@/lib/api";
 import { parseLrc, type LyricLine } from "@/lib/utils";
 import type { Song } from "@/types";
@@ -13,34 +14,22 @@ interface LyricsProps {
 }
 
 export function Lyrics({ song, currentTime, onSeek }: LyricsProps) {
-  const [lyrics, setLyrics] = useState<LyricLine[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: lrcText, isLoading: loading } = useSWR(
+    song ? `lyric-${song.id}` : null,
+    () => getSongLyric(song!.id),
+    { revalidateOnFocus: false }
+  );
+
+  const lyrics = useMemo(() => {
+    return lrcText ? parseLrc(lrcText) : [];
+  }, [lrcText]);
+
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const lastActiveIndex = useRef(-1);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isUserScrollingRef = useRef(false);
-
-  useEffect(() => {
-    if (!song) {
-      setLyrics([]);
-      return;
-    }
-    let cancelled = false;
-    const fetchLyrics = async () => {
-      setLoading(true);
-      const lrcText = await getSongLyric(song.id);
-      if (!cancelled) {
-        setLyrics(parseLrc(lrcText || ""));
-        setLoading(false);
-      }
-    };
-    fetchLyrics();
-    return () => {
-      cancelled = true;
-    };
-  }, [song?.id]);
 
   const activeIndex = useMemo(() => {
     if (lyrics.length === 0) return -1;

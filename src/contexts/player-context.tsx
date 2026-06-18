@@ -27,6 +27,7 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
           currentSong: song,
           isPlaying: true,
           currentIndex: existingIndex,
+          progress: 0,
         };
       }
 
@@ -36,6 +37,7 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         isPlaying: true,
         playlist: [...state.playlist, song],
         currentIndex: state.playlist.length,
+        progress: 0,
       };
     }
 
@@ -47,6 +49,7 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         currentSong: songs[startIndex] || null,
         currentIndex: startIndex,
         isPlaying: songs.length > 0,
+        progress: 0,
       };
     }
 
@@ -84,6 +87,7 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
           currentIndex: insertAt,
           isPlaying: true,
           priorityQueue: remaining,
+          progress: 0,
         };
       }
 
@@ -101,6 +105,7 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         currentSong: state.playlist[nextIndex],
         currentIndex: nextIndex,
         isPlaying: true,
+        progress: 0,
       };
     }
 
@@ -119,6 +124,7 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         currentSong: state.playlist[prevIndex],
         currentIndex: prevIndex,
         isPlaying: true,
+        progress: 0,
       };
     }
 
@@ -179,6 +185,15 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         playlist: newPlaylist,
         currentIndex: newIndex,
         currentSong: newCurrentSong,
+        progress: newCurrentSong?.id !== state.currentSong?.id ? 0 : state.progress,
+      };
+    }
+
+    case "HYDRATE_STATE": {
+      return {
+        ...state,
+        ...action.state,
+        isPlaying: false, // 避免刷新页面后自动播放
       };
     }
 
@@ -211,6 +226,68 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem("radio_volume", state.volume.toString());
   }, [state.volume]);
+
+  // 从 localStorage 恢复完整的播放器状态
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem("radio_playback_state");
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        dispatch({ type: "HYDRATE_STATE", state: parsedState });
+      }
+    } catch (e) {
+      console.error("Failed to restore playback state:", e);
+    }
+  }, []);
+
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  // 核心状态改变时立即保存（包含 progress，切换时通常为 0）
+  useEffect(() => {
+    const stateToSave = {
+      currentSong: state.currentSong,
+      playlist: state.playlist,
+      playMode: state.playMode,
+      currentIndex: state.currentIndex,
+      priorityQueue: state.priorityQueue,
+      progress: state.progress,
+    };
+    localStorage.setItem("radio_playback_state", JSON.stringify(stateToSave));
+  }, [state.currentSong, state.playlist, state.playMode, state.currentIndex, state.priorityQueue]);
+
+  // 定期持久化进度
+  useEffect(() => {
+    const saveState = () => {
+      const currentState = stateRef.current;
+      const stateToSave = {
+        currentSong: currentState.currentSong,
+        playlist: currentState.playlist,
+        playMode: currentState.playMode,
+        currentIndex: currentState.currentIndex,
+        priorityQueue: currentState.priorityQueue,
+        progress: currentState.progress,
+      };
+      localStorage.setItem("radio_playback_state", JSON.stringify(stateToSave));
+    };
+
+    // 离开页面前强制保存
+    window.addEventListener("beforeunload", saveState);
+
+    // 每 3 秒自动保存一次（仅在播放时）
+    const interval = setInterval(() => {
+      if (stateRef.current.isPlaying) {
+        saveState();
+      }
+    }, 3000);
+
+    return () => {
+      window.removeEventListener("beforeunload", saveState);
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <PlayerContext.Provider value={{ state, dispatch, audioRef }}>

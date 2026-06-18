@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import useSWR from "swr";
 import { PenLine, X, Trash2, BookOpen } from "lucide-react";
 import { getDiaries, saveDiary, deleteDiary } from "@/app/actions";
 import { showToast } from "@/components/Toast";
@@ -20,39 +21,33 @@ interface DiaryEntry {
 }
 
 export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: MusicDiaryProps) {
-  const [entries, setEntries] = useState<DiaryEntry[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { data: allDiaries, isLoading, mutate } = useSWR(
+    "all-diaries",
+    () => getDiaries(),
+    { revalidateOnFocus: true }
+  );
+
+  const entries = useMemo(() => {
+    if (!songId || !allDiaries) return [];
+    return allDiaries
+      .filter((d) => d.songId === songId)
+      .map((d) => {
+        const date = new Date(d.createdAt);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return {
+          id: d.id,
+          content: d.content,
+          timestamp: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`,
+        };
+      });
+  }, [allDiaries, songId]);
+
+  const loaded = !isLoading;
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [isPending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  // 加载当前歌曲的手账
-  useEffect(() => {
-    setLoaded(false);
-    if (songId == null) {
-      setEntries([]);
-      setLoaded(true);
-      return;
-    }
-    getDiaries()
-      .then((all) => {
-        const filtered = all
-          .filter((d) => d.songId === songId)
-          .map((d) => {
-            const date = new Date(d.createdAt);
-            const pad = (n: number) => String(n).padStart(2, "0");
-            return {
-              id: d.id,
-              content: d.content,
-              timestamp: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`,
-            };
-          });
-        setEntries(filtered);
-      })
-      .finally(() => setLoaded(true));
-  }, [songId]);
 
   // 切歌时收起面板、清空草稿
   useEffect(() => {
@@ -94,10 +89,7 @@ export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: M
         artistName: songArtistName || "",
         coverUrl: songCoverUrl || "",
       });
-      const date = new Date(saved.createdAt);
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const timestamp = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-      setEntries((prev) => [{ id: saved.id, content: saved.content, timestamp }, ...prev]);
+      mutate((prev) => (prev ? [saved, ...prev] : [saved]), false);
       setDraft("");
       showToast("已存入手账 ✨");
     });
@@ -106,7 +98,7 @@ export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: M
   const handleDelete = (id: string) => {
     startTransition(async () => {
       await deleteDiary(id);
-      setEntries((prev) => prev.filter((e) => e.id !== id));
+      mutate((prev) => (prev ? prev.filter((e) => e.id !== id) : []), false);
       showToast("已擦除一条记录");
     });
   };
@@ -122,16 +114,37 @@ export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: M
 
   return (
     <div ref={wrapperRef} className="relative mt-5 flex w-64 justify-center">
-      {/* 胶囊触发按钮 */}
+      {/* 动态岛触发按钮 (Dynamic Island) */}
       <motion.button
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        initial="collapsed"
+        animate={isOpen ? "expanded" : "collapsed"}
+        whileHover={isOpen ? "expanded" : "hovered"}
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center justify-center gap-2 rounded-full border border-rose-100/50 bg-rose-50/60 px-5 py-2 text-xs font-medium tracking-widest text-stone-500 shadow-[0_4px_12px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-rose-100/60 hover:text-stone-800 hover:shadow-[0_4px_12px_rgba(225,29,72,0.06)]"
+        className="group flex h-[36px] items-center justify-start overflow-hidden rounded-full border border-border/40 bg-surface/40 shadow-sm backdrop-blur-md transition-colors hover:border-accent/30 hover:bg-accent/10"
       >
-        <PenLine size={13} strokeWidth={1.5} className="text-stone-500" />
-        <span>撰写手账</span>
+        <motion.div 
+          className="flex h-full items-center justify-start"
+          variants={{
+            collapsed: { width: "36px", paddingLeft: "11px", paddingRight: "11px" },
+            hovered: { width: "115px", paddingLeft: "14px", paddingRight: "16px" },
+            expanded: { width: "115px", paddingLeft: "14px", paddingRight: "16px" }
+          }}
+          transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+        >
+          <PenLine size={14} strokeWidth={1.5} className="flex-shrink-0 text-text-secondary transition-colors group-hover:text-accent" />
+          
+          <motion.div
+            variants={{
+              collapsed: { opacity: 0, x: -5, marginLeft: "0px" },
+              hovered: { opacity: 1, x: 0, marginLeft: "8px" },
+              expanded: { opacity: 1, x: 0, marginLeft: "8px" }
+            }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex-shrink-0 whitespace-nowrap text-[12px] font-medium tracking-widest text-text-secondary transition-colors group-hover:text-text-primary"
+          >
+            撰写手账
+          </motion.div>
+        </motion.div>
       </motion.button>
 
       {/* 展开面板 */}
