@@ -44,6 +44,8 @@ export function usePlayer() {
     setDuration: (duration: number) => dispatch({ type: "SET_DURATION", duration }),
     setPlayMode: (mode: PlayMode) => dispatch({ type: "SET_PLAY_MODE", mode }),
     removeSong: (index: number) => dispatch({ type: "REMOVE_SONG", index }),
+    reorderPlaylist: (fromIndex: number, toIndex: number) =>
+      dispatch({ type: "REORDER_PLAYLIST", fromIndex, toIndex }),
     seek: (time: number) => {
       if (audioRef.current) {
         audioRef.current.currentTime = time;

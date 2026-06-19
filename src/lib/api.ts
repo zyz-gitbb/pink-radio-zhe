@@ -63,11 +63,19 @@ export async function getSongUrl(songId: number): Promise<string | null> {
 
 // 规范化歌曲数据（兼容 dt / duration / time 字段）
 export function normalizeSong(s: any): Song {
+  const album = s.al || s.album || undefined;
+  // 搜索 API 返回的 album 有时缺少 picUrl，需要从顶层 picUrl 回退
+  const coverPic = s.al?.picUrl || s.album?.picUrl || s.picUrl;
+  const normalizedAlbum = album
+    ? { ...album, picUrl: album.picUrl || coverPic || "" }
+    : coverPic
+      ? { id: 0, name: "", picUrl: coverPic }
+      : undefined;
   return {
     ...s,
     duration: s.duration || s.dt || s.time || 0,
     ar: s.ar || s.artists || [],
-    al: s.al || s.album || undefined,
+    al: normalizedAlbum,
   };
 }
 
@@ -351,6 +359,8 @@ export async function getPlaylistDetail(id: number): Promise<any | null> {
 }
 
 // 搜索歌曲
+// 搜索 API 返回的歌曲数据经常缺少封面 URL（album.picUrl 为空），
+// 所以搜索后批量获取完整歌曲详情来补全封面等信息
 export async function searchSongs(keyword: string): Promise<Song[]> {
   try {
     const response = await getRequest<any>("search", {
@@ -358,7 +368,39 @@ export async function searchSongs(keyword: string): Promise<Song[]> {
       limit: "20",
       type: "1",
     });
-    return (response.result?.songs || []).map(normalizeSong);
+    const rawSongs: Song[] = (response.result?.songs || []).map(normalizeSong);
+    if (rawSongs.length === 0) return rawSongs;
+
+    // 检查是否缺少封面图，需要批量补全
+    const needsDetail = rawSongs.some((s) => !s.al?.picUrl);
+    if (!needsDetail) return rawSongs;
+
+    // 批量获取完整歌曲详情（song/detail 接口保证返回 picUrl）
+    const ids = rawSongs.map((s: Song) => s.id);
+    try {
+      const detailResponse = await getRequest<any>("song/detail", {
+        ids: ids.join(","),
+      });
+      const detailMap = new Map<number, Song>();
+      for (const raw of detailResponse.songs || []) {
+        const song = normalizeSong(raw);
+        detailMap.set(song.id, song);
+      }
+      // 用详情数据补全：优先用详情的完整数据，回退到搜索结果
+      return rawSongs.map((s) => {
+        const detail = detailMap.get(s.id);
+        if (!detail) return s;
+        return {
+          ...s,
+          al: detail.al || s.al,
+          ar: detail.ar?.length ? detail.ar : s.ar,
+          duration: detail.duration || s.duration,
+        };
+      });
+    } catch {
+      // 补全失败则返回原始搜索结果
+      return rawSongs;
+    }
   } catch (error) {
     console.error("Failed to search songs:", error);
     return [];

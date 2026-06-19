@@ -59,6 +59,12 @@ export async function getChannelById(id: string): Promise<Channel | null> {
  * 自动将 tags 数组序列化为 JSON 字符串
  */
 export async function saveChannel(channelData: Omit<Channel, "songIds">): Promise<void> {
+  sanitizeId(channelData.id, { label: '频道ID' });
+  sanitizeString(channelData.name, { max: 60, allowEmpty: false });
+  sanitizeString(channelData.description, { max: 500 });
+  sanitizeString(channelData.category, { max: 40 });
+  sanitizeString(channelData.coverUrl, { max: 1000 });
+
   const now = new Date();
 
   await db
@@ -93,6 +99,7 @@ export async function saveChannel(channelData: Omit<Channel, "songIds">): Promis
  * 删除频道（级联删除自动清理 channel_songs 关联记录）
  */
 export async function deleteChannel(id: string): Promise<void> {
+  sanitizeId(id, { label: '频道ID' });
   await db.delete(channels).where(eq(channels.id, id));
 
   revalidatePath("/");
@@ -290,6 +297,11 @@ export async function saveDiary(diaryData: {
   artistName?: string;
   coverUrl?: string;
 }): Promise<DiaryData> {
+  sanitizeString(diaryData.content, { max: 500, allowEmpty: false });
+  sanitizeString(diaryData.songName, { max: 120 });
+  sanitizeString(diaryData.artistName, { max: 120 });
+  sanitizeString(diaryData.coverUrl, { max: 1000 });
+
   const id = generateId();
   const now = new Date();
 
@@ -320,8 +332,20 @@ export async function saveDiary(diaryData: {
  * 删除单条手账
  */
 export async function deleteDiary(id: string): Promise<void> {
+  sanitizeId(id, { label: '手账ID' });
   await db.delete(diaries).where(eq(diaries.id, id));
   revalidatePath("/diary");
+}
+
+/**
+ * 编辑手账内容
+ */
+export async function updateDiary(id: string, content: string): Promise<{ id: string; content: string }> {
+  sanitizeId(id, { label: '手账ID' });
+  const trimmed = sanitizeString(content, { max: 500, allowEmpty: false })!;
+  await db.update(diaries).set({ content: trimmed }).where(eq(diaries.id, id));
+  revalidatePath("/diary");
+  return { id, content: trimmed };
 }
 
 /**
@@ -421,6 +445,21 @@ export async function repairDiaryMetadata(): Promise<{
   revalidatePath("/diary");
   revalidatePath("/", "layout");
   return { repaired, failed };
+}
+
+
+function sanitizeString(v: unknown, { max = 500, allowEmpty = true }: { max?: number; allowEmpty?: boolean } = {}) {
+  if (v === undefined || v === null) return allowEmpty ? '' : undefined
+  const s = String(v).trim()
+  if (!allowEmpty && s.length === 0) throw new Error('输入不能为空')
+  if (s.length > max) throw new Error('内容过长')
+  return s
+}
+
+function sanitizeId(v: unknown, { label = 'id' }: { label?: string } = {}) {
+  const s = String(v ?? '').trim()
+  if (s.length === 0 || s.length > 128) throw new Error(label + ' 格式不合法')
+  return s
 }
 
 // ==================== 工具函数 ====================

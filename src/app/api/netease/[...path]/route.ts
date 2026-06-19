@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const NETEASE_API_BASE = "http://localhost:4000";
+const NETEASE_API_BASE = process.env.NETEASE_API_BASE_URL?.trim();
 
 async function proxyRequest(request: NextRequest, path: string[]): Promise<NextResponse> {
   if (!NETEASE_API_BASE) {
     return NextResponse.json(
-      { code: 500, message: "API 配置错误", retryable: false },
+      {
+        code: 500,
+        message: "NETEASE_API_BASE_URL 未配置，请在 .env.local 中设置",
+        retryable: false,
+      },
       { status: 500 }
     );
   }

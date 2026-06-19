@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Plus, Check, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Search, Plus, Check, Play, Pause, Loader2 } from "lucide-react";
 import { searchSongs } from "@/lib/api";
+import { getSongCoverUrl, getSongArtistNames, getSongAlbumName } from "@/types";
+import { usePlayer } from "@/hooks/use-player";
 import type { Song } from "@/types";
 
 interface SearchSongsProps {
@@ -11,24 +13,65 @@ interface SearchSongsProps {
 }
 
 export function SearchSongs({ onAddSong, addedSongIds = [] }: SearchSongsProps) {
+  const { playSong, currentSong, isPlaying, togglePlay } = usePlayer();
   const [keyword, setKeyword] = useState("");
   const [results, setResults] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const handleSearch = async () => {
-    if (!keyword.trim()) return;
+  const doSearch = useCallback(async (kw: string) => {
+    // 取消上一次未完成的请求
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setSearched(true);
     try {
-      const songs = await searchSongs(keyword.trim());
-      setResults(songs);
+      const songs = await searchSongs(kw);
+      if (!controller.signal.aborted) {
+        setResults(songs);
+      }
     } catch (error) {
-      console.error("搜索失败:", error);
-      setResults([]);
+      if (!controller.signal.aborted) {
+        console.error("搜索失败:", error);
+        setResults([]);
+      }
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
+  }, []);
+
+  // 输入变化时自动搜索（debounce 400ms，至少 2 个字符）
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    const trimmed = keyword.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setSearched(false);
+      setLoading(false);
+      return;
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      doSearch(trimmed);
+    }, 400);
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [keyword, doSearch]);
+
+  // 手动搜索（回车或点击按钮，立即触发）
+  const handleSearch = async () => {
+    if (!keyword.trim()) return;
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    await doSearch(keyword.trim());
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -85,14 +128,16 @@ export function SearchSongs({ onAddSong, addedSongIds = [] }: SearchSongsProps) 
           <div className="space-y-0.5">
             {results.map((song) => {
               const added = isAdded(song.id);
-              const artistNames = (song.ar || song.artists || []).map((a) => a.name).join("/");
-              const albumName = song.al?.name || song.album?.name || "";
-              const coverUrl = song.al?.picUrl || song.album?.picUrl || "/default-cover.svg";
+              const artistNames = getSongArtistNames(song);
+              const albumName = getSongAlbumName(song);
+              const coverUrl = getSongCoverUrl(song);
+
+              const isCurrentSong = currentSong?.id === song.id;
 
               return (
                 <div
                   key={song.id}
-                  className="hover:bg-accent/5 flex items-center rounded-lg p-2.5 transition-colors"
+                  className="group hover:bg-accent/5 flex items-center rounded-lg p-2.5 transition-colors"
                 >
                   <img
                     src={coverUrl}
@@ -114,6 +159,29 @@ export function SearchSongs({ onAddSong, addedSongIds = [] }: SearchSongsProps) 
                   <span className="w-12 text-right font-mono text-[11px] text-stone-400/60 tabular-nums">
                     {formatDuration(song.duration || 0)}
                   </span>
+
+                  {/* 播放按钮 */}
+                  <button
+                    onClick={() => {
+                      if (isCurrentSong) {
+                        togglePlay();
+                      } else {
+                        playSong(song);
+                      }
+                    }}
+                    className={`ml-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-all ${
+                      isCurrentSong
+                        ? "bg-accent text-white"
+                        : "text-stone-400 opacity-0 hover:bg-accent/10 hover:text-accent group-hover:opacity-100"
+                    }`}
+                    title={isCurrentSong && isPlaying ? "暂停" : "播放"}
+                  >
+                    {isCurrentSong && isPlaying ? (
+                      <Pause size={12} fill="currentColor" />
+                    ) : (
+                      <Play size={12} fill="currentColor" className="ml-0.5" />
+                    )}
+                  </button>
 
                   <button
                     onClick={() => handleAdd(song)}

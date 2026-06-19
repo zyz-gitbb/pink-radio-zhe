@@ -63,17 +63,6 @@ export function ChannelContent({ channel }: ChannelContentProps) {
     [channel.id, router]
   );
 
-  if (songsLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex items-center gap-2">
-          <div className="bg-accent/40 h-2 w-2 animate-pulse rounded-full" />
-          <span className="text-[13px] text-stone-400">加载歌曲中...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative min-h-screen">
       {/* 沉浸式微光背景 */}
@@ -175,7 +164,28 @@ export function ChannelContent({ channel }: ChannelContentProps) {
           </div>
         )}
 
-        {songs.length > 0 ? (
+        {songsLoading ? (
+          /* 歌曲列表骨架屏 */
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="animate-skeleton h-5 w-24 rounded-md bg-stone-200/60" />
+              <div className="animate-skeleton h-8 w-28 rounded-lg bg-stone-200/60" />
+            </div>
+            <div className="space-y-1">
+              {Array.from({ length: Math.min(channel.songIds.length || 5, 8) }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-2.5" style={{ height: 52 }}>
+                  <div className="animate-skeleton h-4 w-6 rounded bg-stone-200/50" />
+                  <div className="animate-skeleton h-9 w-9 rounded bg-stone-200/50" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="animate-skeleton h-3.5 w-32 rounded bg-stone-200/50" style={{ animationDelay: `${i * 50}ms` }} />
+                    <div className="animate-skeleton h-3 w-24 rounded bg-stone-200/30" style={{ animationDelay: `${i * 50 + 25}ms` }} />
+                  </div>
+                  <div className="animate-skeleton h-3 w-10 rounded bg-stone-200/30" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : songs.length > 0 ? (
           <SongList
             songs={songs}
             channelId={channel.id}

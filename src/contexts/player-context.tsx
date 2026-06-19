@@ -15,7 +15,7 @@ const initialState: PlayerState = {
   priorityQueue: [],
 };
 
-function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
+export function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
   switch (action.type) {
     case "PLAY_SONG": {
       const { song } = action;
@@ -92,6 +92,15 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
       }
 
       if (state.playlist.length === 0) return state;
+
+      // 单曲循环：保持当前歌曲，重置进度
+      if (state.playMode === "repeat-one") {
+        return {
+          ...state,
+          isPlaying: true,
+          progress: 0,
+        };
+      }
 
       let nextIndex: number;
       if (state.playMode === "random") {
@@ -186,6 +195,33 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         currentIndex: newIndex,
         currentSong: newCurrentSong,
         progress: newCurrentSong?.id !== state.currentSong?.id ? 0 : state.progress,
+      };
+    }
+
+    case "REORDER_PLAYLIST": {
+      const { fromIndex, toIndex } = action;
+      if (fromIndex === toIndex) return state;
+      if (fromIndex < 0 || fromIndex >= state.playlist.length) return state;
+      if (toIndex < 0 || toIndex >= state.playlist.length) return state;
+
+      const newPlaylist = [...state.playlist];
+      const [moved] = newPlaylist.splice(fromIndex, 1);
+      newPlaylist.splice(toIndex, 0, moved);
+
+      // 跟随当前播放歌曲的索引变化
+      let newIndex = state.currentIndex;
+      if (state.currentIndex === fromIndex) {
+        newIndex = toIndex;
+      } else if (fromIndex < state.currentIndex && toIndex >= state.currentIndex) {
+        newIndex = state.currentIndex - 1;
+      } else if (fromIndex > state.currentIndex && toIndex <= state.currentIndex) {
+        newIndex = state.currentIndex + 1;
+      }
+
+      return {
+        ...state,
+        playlist: newPlaylist,
+        currentIndex: newIndex,
       };
     }
 

@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { FolderPlus, Music2 } from "lucide-react";
-import { getChannels, addSongToChannel } from "@/app/actions";
+import { addSongToChannel } from "@/app/actions";
+import { useChannels } from "@/hooks/use-channels";
 import { showToast } from "@/components/Toast";
-import type { Channel } from "@/types";
 
 interface ChannelPickerPopoverProps {
   songId: number;
@@ -25,13 +25,12 @@ export function ChannelPickerPopover({
   triggerRef,
   onClose,
 }: ChannelPickerPopoverProps) {
-  const [channels, setChannels] = useState<Channel[]>([]);
+  const { channels } = useChannels();
   const [pos, setPos] = useState({ bottom: 0, right: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    getChannels().then(setChannels);
     setMounted(true);
   }, []);
 

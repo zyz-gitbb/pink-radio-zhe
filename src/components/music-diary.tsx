@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useSWR from "swr";
-import { PenLine, X, Trash2, BookOpen } from "lucide-react";
-import { getDiaries, saveDiary, deleteDiary } from "@/app/actions";
+import { PenLine, X, Trash2, BookOpen, Check, Pencil } from "lucide-react";
+import { getDiaries, saveDiary, deleteDiary, updateDiary } from "@/app/actions";
 import { showToast } from "@/components/Toast";
 
 interface MusicDiaryProps {
@@ -27,24 +27,77 @@ export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: M
     { revalidateOnFocus: true }
   );
 
-  const entries = useMemo(() => {
+  interface DiaryEntry {
+    id: string;
+    content: string;
+    timestamp: string;
+    date: Date;
+  }
+
+  interface DiaryGroup {
+    label: string;
+    entries: DiaryEntry[];
+  }
+
+  const groupedEntries = useMemo<DiaryGroup[]>(() => {
     if (!songId || !allDiaries) return [];
-    return allDiaries
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = `${yesterday.getFullYear()}-${yesterday.getMonth()}-${yesterday.getDate()}`;
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    // 构建条目并按时间倒序
+    const entries: DiaryEntry[] = allDiaries
       .filter((d) => d.songId === songId)
       .map((d) => {
         const date = new Date(d.createdAt);
-        const pad = (n: number) => String(n).padStart(2, "0");
         return {
           id: d.id,
           content: d.content,
+          date,
           timestamp: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`,
         };
-      });
+      })
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    // 按日期分组，同时记录 label
+    const groupMap = new Map<string, { label: string; entries: DiaryEntry[] }>();
+    for (const entry of entries) {
+      const d = entry.date;
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!groupMap.has(key)) {
+        let label: string;
+        if (key === todayKey) {
+          label = "今天";
+        } else if (key === yesterdayKey) {
+          label = "昨天";
+        } else {
+          const y = d.getFullYear();
+          const m = d.getMonth() + 1;
+          const day = d.getDate();
+          label = y === now.getFullYear() ? `${m}月${day}日` : `${y}年${m}月${day}日`;
+        }
+        groupMap.set(key, { label, entries: [] });
+      }
+      groupMap.get(key)!.entries.push(entry);
+    }
+
+    return Array.from(groupMap.values());
   }, [allDiaries, songId]);
+
+  const totalEntries = useMemo(
+    () => groupedEntries.reduce((sum, g) => sum + g.entries.length, 0),
+    [groupedEntries]
+  );
 
   const loaded = !isLoading;
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
   const [isPending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -100,6 +153,36 @@ export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: M
       await deleteDiary(id);
       mutate((prev) => (prev ? prev.filter((e) => e.id !== id) : []), false);
       showToast("已擦除一条记录");
+    });
+  };
+
+  const handleStartEdit = (id: string, content: string) => {
+    setEditingId(id);
+    setEditContent(content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditContent("");
+  };
+
+  const handleSaveEdit = (id: string) => {
+    if (!editContent.trim()) {
+      showToast("内容不能为空");
+      return;
+    }
+    startTransition(async () => {
+      const updated = await updateDiary(id, editContent.trim());
+      mutate(
+        (prev) =>
+          prev
+            ? prev.map((d) => (d.id === id ? { ...d, content: updated.content } : d))
+            : [],
+        false
+      );
+      setEditingId(null);
+      setEditContent("");
+      showToast("已更新 ✨");
     });
   };
 
@@ -165,8 +248,8 @@ export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: M
                 <span className="text-[10px] font-medium tracking-wide text-stone-400 uppercase">
                   Music Diary
                 </span>
-                {entries.length > 0 && (
-                  <span className="ml-0.5 text-[9px] text-stone-300">({entries.length})</span>
+                {totalEntries > 0 && (
+                  <span className="ml-0.5 text-[9px] text-stone-300">({totalEntries})</span>
                 )}
               </div>
               <button
@@ -204,39 +287,106 @@ export function MusicDiary({ songId, songName, songArtistName, songCoverUrl }: M
             </div>
 
             {/* 分割线 */}
-            {entries.length > 0 && <div className="mx-4 h-px bg-stone-200/40" />}
+            {totalEntries > 0 && <div className="mx-4 h-px bg-stone-200/40" />}
 
-            {/* 历史记录滚动列表 */}
-            {entries.length > 0 && (
-              <div className="scrollbar-hide max-h-[250px] space-y-2.5 overflow-y-auto px-4 py-2">
-                {entries.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="group relative border-b border-stone-100/60 pb-2.5 last:border-b-0 last:pb-0"
-                  >
-                    <p className="pr-5 text-[11.5px] leading-relaxed break-words whitespace-pre-wrap text-stone-600">
-                      {entry.content}
-                    </p>
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <span className="font-mono text-[8.5px] text-stone-300">
-                        {entry.timestamp}
+            {/* 历史记录滚动列表（按日期分组） */}
+            {totalEntries > 0 && (
+              <div className="scrollbar-hide max-h-[250px] overflow-y-auto px-4 py-2">
+                {groupedEntries.map((group, gi) => (
+                  <div key={gi} className={gi > 0 ? "mt-3" : ""}>
+                    {/* 日期分组标题 */}
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <span className="text-[9px] font-medium tracking-wide text-stone-400">
+                        {group.label}
                       </span>
+                      <div className="h-px flex-1 bg-stone-200/30" />
                     </div>
-                    <button
-                      onClick={() => handleDelete(entry.id)}
-                      disabled={isPending}
-                      className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded text-stone-300 opacity-0 transition-all group-hover:opacity-100 hover:text-red-400 disabled:opacity-40"
-                      title="删除"
-                    >
-                      <Trash2 size={10} />
-                    </button>
+                    {/* 该组内的条目 */}
+                    <div className="space-y-2">
+                      {group.entries.map((entry) => {
+                        const isEditing = editingId === entry.id;
+                        return (
+                          <div
+                            key={entry.id}
+                            className="group relative border-b border-stone-100/60 pb-2 last:border-b-0 last:pb-0"
+                          >
+                            {isEditing ? (
+                              /* 编辑模式 */
+                              <div>
+                                <textarea
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  maxLength={500}
+                                  rows={3}
+                                  autoFocus
+                                  className="w-full resize-none rounded-lg bg-stone-50/80 px-2.5 py-1.5 text-[11.5px] leading-relaxed text-stone-700 outline-none ring-1 ring-stone-200/60 focus:ring-rose-200/60"
+                                />
+                                <div className="mt-1 flex items-center justify-between">
+                                  <span className="font-mono text-[8.5px] text-stone-300 tabular-nums">
+                                    {editContent.length}/500
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={handleCancelEdit}
+                                      disabled={isPending}
+                                      className="rounded-md px-2 py-0.5 text-[10px] text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
+                                    >
+                                      取消
+                                    </button>
+                                    <button
+                                      onClick={() => handleSaveEdit(entry.id)}
+                                      disabled={isPending || !editContent.trim()}
+                                      className="flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-400 transition-all hover:bg-rose-100 disabled:opacity-40"
+                                    >
+                                      <Check size={10} />
+                                      保存
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              /* 展示模式 */
+                              <>
+                                <p className="pr-10 text-[11.5px] leading-relaxed break-words whitespace-pre-wrap text-stone-600">
+                                  {entry.content}
+                                </p>
+                                <div className="mt-1.5 flex items-center justify-between">
+                                  <span className="font-mono text-[8.5px] text-stone-300">
+                                    {entry.timestamp}
+                                  </span>
+                                </div>
+                                {/* 操作按钮 */}
+                                <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-0 transition-all group-hover:opacity-100">
+                                  <button
+                                    onClick={() => handleStartEdit(entry.id, entry.content)}
+                                    disabled={isPending}
+                                    className="flex h-5 w-5 items-center justify-center rounded text-stone-300 hover:text-accent disabled:opacity-40"
+                                    title="编辑"
+                                  >
+                                    <Pencil size={10} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(entry.id)}
+                                    disabled={isPending}
+                                    className="flex h-5 w-5 items-center justify-center rounded text-stone-300 hover:text-red-400 disabled:opacity-40"
+                                    title="删除"
+                                  >
+                                    <Trash2 size={10} />
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
             {/* 空状态提示 */}
-            {entries.length === 0 && (
+            {totalEntries === 0 && (
               <div className="px-4 pb-3.5">
                 <p className="text-center text-[10px] text-stone-300">还没有留下任何足迹</p>
               </div>

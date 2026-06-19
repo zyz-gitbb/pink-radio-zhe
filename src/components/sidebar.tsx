@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Radio, Settings, User, LogOut, Loader2, Music, Disc3, BookOpen } from "lucide-react";
 import { useUser } from "@/contexts/user-context";
 import { LoginModal } from "@/components/login-modal";
 import { logout } from "@/lib/api";
-import { getChannels } from "@/app/actions";
-import type { Channel } from "@/types";
+import { useChannels } from "@/hooks/use-channels";
 
 const navItems = [
   { href: "/", label: "首页", icon: Home },
@@ -21,13 +20,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, isLogin, loading, refreshUser } = useUser();
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    getChannels().then(setChannels);
-  }, []);
+  const { channels } = useChannels();
 
   const handleLogout = async () => {
     await logout();
@@ -79,7 +72,7 @@ export function Sidebar() {
         </nav>
 
         {/* 频道列表 */}
-        {mounted && channels.length > 0 && (
+        {channels.length > 0 && (
           <div className="mt-4 px-3">
             <div className="mb-2 flex items-center justify-between px-4">
               <span className="text-text-secondary/60 text-[10px] font-medium tracking-[0.15em] uppercase">

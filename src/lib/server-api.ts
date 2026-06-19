@@ -41,6 +41,22 @@ export async function getPlaylistDetailServer(id: number): Promise<any | null> {
   }
 }
 
+export async function getAlbumDetailServer(id: number): Promise<any | null> {
+  try {
+    const res = await serverFetch(`album?id=${id}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const album = data.album || null;
+    if (album && data.songs) {
+      album.songs = data.songs.map(normalizeSong);
+    }
+    return album;
+  } catch (error) {
+    console.error("Server fetch album error:", error);
+    return null;
+  }
+}
+
 export async function getRecommendationsServer(): Promise<PersonalizedResponse> {
   const bust = Date.now().toString();
   try {

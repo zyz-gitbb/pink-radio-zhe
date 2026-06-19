@@ -23,7 +23,11 @@
       "Bash(netstat -ano)",
       "Bash(findstr \":3000\")",
       "Bash(findstr \"LISTENING\")",
-      "Bash(findstr \":3001\")"
+      "Bash(findstr \":3001\")",
+      "Bash(mkdir -p d:/cc.test/cctry/radio/src/components/player)"
+    ],
+    "additionalDirectories": [
+      "d:\\cc.test\\cctry\\radio\\src\\components"
     ]
   },
   "statusLine": {

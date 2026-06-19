@@ -67,7 +67,7 @@ export interface Channel {
 export type ChannelCategory = string;
 
 // 播放器相关类型
-export type PlayMode = "sequential" | "random";
+export type PlayMode = "sequential" | "random" | "repeat-one";
 
 export interface PlayerState {
   currentSong: Song | null;
@@ -94,6 +94,7 @@ export type PlayerAction =
   | { type: "SET_DURATION"; duration: number }
   | { type: "SET_PLAY_MODE"; mode: PlayMode }
   | { type: "REMOVE_SONG"; index: number }
+  | { type: "REORDER_PLAYLIST"; fromIndex: number; toIndex: number }
   | { type: "PLAY_NEXT"; song: Song }
   | { type: "HYDRATE_STATE"; state: Partial<PlayerState> };
 
