@@ -1,6 +1,6 @@
-# 🎵 我的音乐电台 (Music Radio) — v1.1.1
+# 🎵 我的音乐电台 (Music Radio) — v1.2.0
 
-基于 Next.js App Router 和网易云音乐 API 构建的个人高颜值音乐电台。采用“高级粉奶油”手账风设计，支持策展频道、个性化电台、歌词律动、以及独创的**音乐手账**功能。
+基于 Next.js App Router 和网易云音乐 API 构建的个人高颜值音乐电台。采用”高级粉奶油”手账风设计，支持策展频道、个性化电台、歌词律动、以及独创的**音乐手账**功能。
 
 ## ✨ 核心特性 (Features)
 
@@ -15,7 +15,13 @@
 
 ### 🎧 沉浸式核心播放器
 - **全局浮动控制条**：无缝跨页面的自定义 `<audio>` 播放器，完美接管播放控制。
+- **3D 悬浮歌词面板**：全屏歌词面板搭配 3D 视差封面特效，鼠标移动产生悬浮旋转与动态光斑，点击封面可直接跳转专辑详情页。
 - **歌词与网易云热评**：内置智能 LRC 歌词解析器实现滚动高亮，同时支持右侧抽屉式展示网易云热门实时评论。
+- **播放队列管理**：支持"下一首播放"优先队列，拖拽排序，移除歌曲等操作。
+
+### 💿 专辑详情页
+- **专辑信息展示**：展示专辑封面、歌手、描述、发布日期及完整歌曲列表。
+- **无缝跳转**：从歌词面板封面点击即可进入对应专辑页。
 
 ### 📖 独具匠心：音乐手账 (Music Diary)
 - **听歌日记**：随时为当前播放的歌曲写下一段心情记录。
@@ -79,10 +85,11 @@ npm run dev
 ---
 
 ## 📂 项目结构导览
-- **`src/app/`**: Next.js App Router 路由页面（`/` 频道列表、`/channel/[id]` 频道详情、`/playlist/[id]` 歌单详情、`/radio` 推荐页、`/diary` 日记页、`/admin` 频道管理、`/api/netease/[...path]` 反向代理）。
+- **`src/app/`**: Next.js App Router 路由页面（`/` 频道列表、`/channel/[id]` 频道详情、`/playlist/[id]` 歌单详情、`/album/[id]` 专辑详情、`/radio` 推荐页、`/diary` 日记页、`/admin` 频道管理、`/api/netease/[...path]` 反向代理）。
 - **`src/components/`**: 核心 UI 组件库，如全能播放器 (`Player.tsx`)、手账抽屉 (`music-diary.tsx`)、动态背景 (`ambient-background.tsx`)、歌词 (`lyrics.tsx`)、评论抽屉 (`comment-drawer.tsx`)。
+- **`src/components/player/`**: 播放器子组件 — 3D 封面 (`cover-card-3d.tsx`)、歌词面板 (`lyrics-panel.tsx`)、进度条 (`progress-bar.tsx`)、传输控制 (`transport-controls.tsx`)、右侧控件 (`right-controls.tsx`)、播放队列 (`queue-panel.tsx`)。
 - **`src/contexts/`**: React Context 全局状态管理 — `PlayerContext`（14 种播放器状态 + 优先队列）和 `UserContext`（登录状态）。
 - **`src/db/`**: Drizzle ORM Schema 定义，包含 `channels`（频道）、`channel_songs`（歌曲关联）、`categories`（分类）、`diaries`（手账）四张表。
 - **`src/lib/`**: 工具函数与 API 封装 — `api.ts`（客户端请求）、`server-api.ts`（服务端请求）、`utils.ts`（通用工具）。
-- **`src/hooks/`**: 自定义 Hooks，如 `use-player.ts`。
+- **`src/hooks/`**: 自定义 Hooks — `use-player.ts`（播放器状态）、`use-audio-engine.ts`（音频引擎）、`use-keyboard-shortcuts.ts`（快捷键）、`use-media-session.ts`（媒体会话）、`use-channels.ts`（频道管理）。
 - **`src/types/`**: TypeScript 类型定义，兼容官方与社区网易云 API 两种字段格式。
