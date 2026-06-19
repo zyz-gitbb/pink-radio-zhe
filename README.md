@@ -1,4 +1,4 @@
-# 🎵 我的音乐电台 (Music Radio)
+# 🎵 我的音乐电台 (Music Radio) — v1.1.1
 
 基于 Next.js App Router 和网易云音乐 API 构建的个人高颜值音乐电台。采用“高级粉奶油”手账风设计，支持策展频道、个性化电台、歌词律动、以及独创的**音乐手账**功能。
 
@@ -22,11 +22,14 @@
 - **数据永久留存**：所有手账数据（包含歌曲信息和时间戳）会通过 Server Actions 被持久化存储在本地 SQLite 数据库中，成为你私人的音乐记忆库。
 
 ### ⚡ 现代化技术栈
-- **前端框架**：Next.js 15+ (App Router), React 19
+- **前端框架**：Next.js 16 (App Router), React 19
 - **原子化样式**：Tailwind CSS v4
 - **动画引擎**：Framer Motion
+- **数据获取**：SWR（客户端缓存与请求管理）
 - **数据库与持久化**：Drizzle ORM + better-sqlite3 (服务端本地 SQLite)，搭配无缝的 `DataMigrator` 数据迁移模块。
+- **图标库**：Lucide React
 - **PWA 原生体验**：接入 `@serwist/next`，支持离线缓存和将网页安装为桌面级 PWA 应用。
+- **测试框架**：Vitest + Testing Library（jsdom 环境）
 
 ---
 
@@ -49,6 +52,10 @@ set PORT=4000 && npx NeteaseCloudMusicApi
 # 安装依赖
 npm install
 
+# 配置环境变量
+cp .env.example .env.local
+# 编辑 .env.local，确认 NETEASE_API_BASE_URL=http://localhost:4000
+
 # 初始化并同步本地 SQLite 数据库
 npx drizzle-kit push
 
@@ -57,10 +64,25 @@ npm run dev
 ```
 启动成功后，访问 `http://localhost:3000` 即可开始体验！
 
+### 可用命令
+
+| 命令 | 说明 |
+|---|---|
+| `npm run dev` | 启动开发服务器 |
+| `npm run build` | 生产构建 |
+| `npm run start` | 启动生产服务器 |
+| `npm run lint` | ESLint 代码检查 |
+| `npm run test` | 运行测试（单次） |
+| `npm run test:watch` | 运行测试（监听模式） |
+| `npm run format` | Prettier 格式化代码 |
+
 ---
 
 ## 📂 项目结构导览
-- **`src/app/`**: Next.js App 路由（包含 `/radio` 推荐页、`/admin` 频道管理、`/diary` 日记页及 `/api/netease` 反向代理路由）。
-- **`src/components/`**: 核心 UI 组件库，如全能播放器 (`Player.tsx`)、手账抽屉 (`music-diary.tsx`)、动态背景 (`ambient-background.tsx`)。
-- **`src/db/`**: 本地 SQLite 数据库的 Schema 定义表，包含 `channels`（频道）、`diaries`（手账）等。
-- **`src/contexts/`**: React Context 全局状态管理，其中的 `PlayerContext` 精确控制了多达 12 种播放器底层状态。
+- **`src/app/`**: Next.js App Router 路由页面（`/` 频道列表、`/channel/[id]` 频道详情、`/playlist/[id]` 歌单详情、`/radio` 推荐页、`/diary` 日记页、`/admin` 频道管理、`/api/netease/[...path]` 反向代理）。
+- **`src/components/`**: 核心 UI 组件库，如全能播放器 (`Player.tsx`)、手账抽屉 (`music-diary.tsx`)、动态背景 (`ambient-background.tsx`)、歌词 (`lyrics.tsx`)、评论抽屉 (`comment-drawer.tsx`)。
+- **`src/contexts/`**: React Context 全局状态管理 — `PlayerContext`（14 种播放器状态 + 优先队列）和 `UserContext`（登录状态）。
+- **`src/db/`**: Drizzle ORM Schema 定义，包含 `channels`（频道）、`channel_songs`（歌曲关联）、`categories`（分类）、`diaries`（手账）四张表。
+- **`src/lib/`**: 工具函数与 API 封装 — `api.ts`（客户端请求）、`server-api.ts`（服务端请求）、`utils.ts`（通用工具）。
+- **`src/hooks/`**: 自定义 Hooks，如 `use-player.ts`。
+- **`src/types/`**: TypeScript 类型定义，兼容官方与社区网易云 API 两种字段格式。
