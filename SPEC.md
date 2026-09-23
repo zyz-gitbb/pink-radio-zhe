@@ -12,8 +12,8 @@
 - **框架**: Next.js (App Router) + React 19
 - **样式**: Tailwind CSS v4 + Framer Motion（高级粉奶油手账风、3D视差）
 - **状态管理**: React Context + useReducer
-- **部署**: Vercel（零运维、自动部署）
-- **数据存储**: 本地 SQLite 数据库 (Drizzle ORM) + localStorage
+- **部署**: Node.js / VPS / Docker 容器（为支持持久化 SQLite 而采用的传统部署）
+- **数据存储**: 本地 SQLite 数据库 (Drizzle ORM) 为主，少量 localStorage 辅助（支持自动迁移）
 
 ---
 
@@ -78,16 +78,14 @@
 - 解析 LRC 格式歌词
 - 使用 Intersection Observer 实现滚动高亮
 
-### 2.6 用户偏好系统
-**数据存储（localStorage）：**
-- 喜欢的歌曲列表
-- 我的歌单（用户创建的歌单）
-- 播放历史
-- 播放设置（音量、播放模式等）
+### 2.6 数据持久化与音乐手账 (Music Diary)
+**核心数据管理 (SQLite via Server Actions)：**
+- **策展频道与分类**：分类标签和频道内容全部由 Drizzle ORM 管理持久化。
+- **音乐手账**：用户在听歌时的随感记录持久化到 `diaries` 表中，可以与当前播放的歌曲绑定。包含 `repairDiaryMetadata` 机制，自动通过 API 修复手账中缺失的歌曲元数据（如由于外部接口变更导致的封面丢失等）。
+- **无缝数据迁移**：提供 `data-migrator` 组件，首次访问时会自动将旧版本中存储在 localStorage 的频道、分类和日记数据无缝迁移到 SQLite 中。
 
-**数据管理：**
-- 提供一键清除本地数据功能
-- 数据导出/导入功能（可选）
+**本地偏好存储 (localStorage)：**
+- 播放设置（音量、播放模式等临时 UI 状态）
 
 ---
 
@@ -145,6 +143,7 @@ src/
 ├── contexts/              # React Context
 │   └── PlayerContext.tsx  # 播放器状态
 ├── types/                 # TypeScript 类型定义
+├── db/                    # Drizzle ORM Schema
 └── styles/                # 全局样式
 ```
 
@@ -180,9 +179,9 @@ interface PlayerState {
 ```
 
 ### 4.4 数据流
-1. **频道数据**: 管理员通过 API 创建 → 存储在网易云歌单 → 前端请求展示
-2. **用户数据**: 播放/喜欢操作 → 存储在 localStorage → 推荐算法读取
-3. **播放控制**: 用户操作 → 更新 PlayerContext → 触发 audio 元素
+1. **核心业务数据**: 频道配置、手账日记等 → 经由 Server Actions (`actions.ts`) 操作 SQLite → 前端渲染
+2. **外部依赖**: 播放流、歌曲详情、推荐数据、热门评论 → 经过 `app/api/netease` 代理层 → 访问本地运行的社区网易云 API 服务
+3. **播放控制**: 用户操作 → 更新 `PlayerContext` → 触发全局 `<audio>` 元素
 
 ---
 
@@ -199,8 +198,8 @@ interface PlayerState {
 ### 5.2 用户体验风险
 | 风险 | 影响 | 缓解措施 |
 |------|------|----------|
-| localStorage 数据丢失 | 用户偏好丢失 | 提供数据导出功能 |
-| 跨设备不同步 | 数据不一致 | 提示用户数据仅本地存储 |
+| SQLite 数据库锁冲突 | 读写性能下降 | 已开启 WAL 模式提高并发读写性能 |
+| 跨设备不同步 | 偏好不一致 | 目前定位为单机服务，如需跨设备可扩展身份鉴权机制 |
 | 播放器在后台被浏览器暂停 | 播放中断 | PWA 支持 + 提示用户 |
 | 移动端兼容性问题 | 部分功能不可用 | 优雅降级，核心功能可用 |
 
@@ -209,7 +208,7 @@ interface PlayerState {
 |------|------|----------|
 | 大量歌曲加载慢 | 首屏加载时间长 | 虚拟滚动 + 懒加载 |
 | 频繁 API 调用 | 触发限流 | 本地缓存已请求数据 |
-| localStorage 数据过大 | 性能下降 | 定期清理历史数据 |
+| 本地数据过大 | 性能下降 | 定期清理历史数据 |
 
 ---
 
@@ -254,31 +253,32 @@ interface PlayerState {
 - `fix/*`: 修复分支
 
 ### 6.4 单元测试
-- **测试框架**: Jest + React Testing Library
+- **测试框架**: Jest / Vitest + React Testing Library
 - **覆盖范围**: 
   - 工具函数（100% 覆盖）
   - 自定义 Hooks
   - 关键业务逻辑
-- **测试文件**: 与源文件同目录，命名 `*.test.tsx`
+- **测试文件**: 与源文件同目录，命名 `*.test.tsx` 或 `*.test.ts`
 
 ---
 
 ## 7. 部署与运维
 
 ### 7.1 部署环境
-- **平台**: Vercel
-- **自动部署**: Push 到 `main` 分支自动部署
-- **预览部署**: PR 自动创建预览环境
+- **平台**: Node.js 环境（VPS 或 Docker 容器）
+- **数据库支撑**: 由于项目深度依赖本地 SQLite (`data.db`)，弃用无状态的 Vercel Serverless 方案，改为持久化友好的传统部署模式。
+- **进程守护**: 推荐使用 PM2 或 Docker Compose 进行后台守护与日志管理。
 
 ### 7.2 环境变量
 ```env
 # .env.local
 NETEASE_API_KEY=xxx          # 网易云 API Key（仅服务端使用）
 NETEASE_API_SECRET=xxx       # 网易云 API Secret
+NETEASE_API_BASE_URL=http://localhost:4000 # 社区 API 代理地址
 ```
 
 ### 7.3 监控与日志
-- **错误监控**: Vercel Analytics + 自定义错误边界
+- **错误监控**: 自定义错误边界
 - **性能监控**: Core Web Vitals 追踪
 - **日志**: API 调用日志（仅错误日志）
 
@@ -287,52 +287,48 @@ NETEASE_API_SECRET=xxx       # 网易云 API Secret
 ## 8. 待确认事项
 
 ### 8.1 API 权限确认
-- [ ] 网易云个人开发者 API 具体可用接口列表
-- [ ] 推荐 API 是否可用（相似歌曲、推荐歌单）
-- [ ] 歌词 API 是否可用
-- [ ] 热门评论 API 是否可用
-- [ ] 播放链接 API 是否可用
+- [x] 基于本地代理运行的网易云 API，核心接口（播放、搜索、歌词、二维码登录、推荐）已验证可用。
 
 ### 8.2 设计细节
-- [ ] 具体配色方案（霓虹色具体色值）
-- [ ] 字体选择（中英文）
-- [ ] 图标库选择（Lucide Icons 推荐）
-- [ ] 具体动画参数（时长、缓动函数）
+- [x] 具体配色方案（高级粉奶油色系确立）
+- [x] 字体选择（DM Sans + 系统中文字体）
+- [x] 图标库选择（采用 Lucide React）
 
 ### 8.3 功能优先级
-- [ ] MVP 功能范围确认
-- [ ] 后续迭代功能规划
+- [x] MVP 功能范围（已实现播放器、手账、频道 CRUD）
+- [ ] 后续迭代功能规划（如：第三方登录联动、云端同步播放历史等）
 
 ---
 
 ## 9. 开发计划建议
 
-### Phase 1: 基础框架（1-2 周）
+### Phase 1: 基础框架（✅ 已完成）
 - 项目初始化（Next.js + TypeScript + Tailwind）
 - 布局结构（侧边栏 + 内容区 + 播放器）
 - API 代理层搭建
 - 播放器核心功能
 
-### Phase 2: 频道系统（1-2 周）
+### Phase 2: 频道系统（✅ 已完成）
 - 频道列表展示
 - 频道详情页
 - 管理员后台（创建/编辑频道）
+- 结合 Drizzle ORM 的 SQLite 落库
 
-### Phase 3: 用户功能（1 周）
-- 喜欢/收藏功能
+### Phase 3: 用户功能（✅ 大部分已完成）
+- 音乐手账 (Music Diary)
+- 遗留数据的 SQLite 自动化迁移 (`data-migrator`)
+- 喜欢/收藏功能 (部分完成)
 - 我的歌单
-- 播放历史
-- 数据清理功能
 
 ### Phase 4: 个性化推荐（1 周）
 - 推荐电台页面
 - 推荐算法实现
-- 歌词展示
+- 歌词展示（已完成核心功能）
 
 ### Phase 5: 优化与测试（1 周）
 - 错误处理完善
 - 性能优化
-- 单元测试编写
+- 单元测试编写（`player-reducer.test.ts`已完成）
 - 响应式适配
 
 ---
@@ -343,12 +339,12 @@ NETEASE_API_SECRET=xxx       # 网易云 API Secret
 | 方案 | 优点 | 缺点 | 结论 |
 |------|------|------|------|
 | Next.js + React | 生态成熟、API Routes 代理 | 学习曲线 | ✅ 采用 |
-| Vercel 部署 | 零运维、自动部署 | 国内访问较慢 | ✅ 采用 |
+| Node.js / VPS 部署 | 完美支持 SQLite 的持久化存储 | 需要自建 CI/CD 和环境配置 | ✅ 采用 (取代 Vercel) |
 | SQLite + Drizzle | 持久化强，类型安全 | 相比纯本地稍重 | ✅ 采用 |
 | 自定义播放器 | 完全控制 UI | 工作量大 | ✅ 采用 |
 
 ### 10.2 参考资源
 - [Next.js 文档](https://nextjs.org/docs)
 - [Tailwind CSS 文档](https://tailwindcss.com/docs)
+- [Drizzle ORM 文档](https://orm.drizzle.team/)
 - [网易云音乐开放平台](https://open.music.163.com)
-- [PWA 文档](https://web.dev/articles/progressive-web-apps)
